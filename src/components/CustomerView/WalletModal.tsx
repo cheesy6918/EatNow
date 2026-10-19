@@ -22,7 +22,7 @@ export const WalletModal: React.FC = () => {
 
   const [customAmount, setCustomAmount] = useState('');
 
-  if (!isWalletModalOpen) return null;
+  if (!isWalletModalOpen || !currentUser) return null;
 
   const userTransactions = transactions.filter((t) => t.userId === currentUser.id);
 

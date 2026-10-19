@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FoodItem } from '../../types';
 import { useApp } from '../../context/AppContext';
-import { Plus, Minus, Star, Clock, Utensils, AlertTriangle } from 'lucide-react';
+import { Plus, Minus, Star, Clock, AlertTriangle } from 'lucide-react';
+import { FoodImage } from '../common/FoodImage';
 
 interface FoodCardProps {
   food: FoodItem;
@@ -9,7 +10,6 @@ interface FoodCardProps {
 
 export const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
   const { addToCart, cart, updateCartQuantity, setSelectedFood } = useApp();
-  const [imageError, setImageError] = useState(false);
 
   // Check if item is already in cart
   const cartItem = cart.find((c) => c.foodItem.id === food.id);
@@ -18,28 +18,19 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
 
   return (
     <div className="group bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:border-slate-300 hover:shadow-md transition-all duration-200">
-      {/* Product Image Area */}
+      {/* Product Image Area with Fixed Aspect Ratio & Multi-stage Fallback */}
       <div
         onClick={() => setSelectedFood(food)}
         className="relative aspect-[4/3] bg-slate-100 overflow-hidden cursor-pointer"
       >
-        {!imageError ? (
-          <img
-            src={food.image}
-            alt={food.name}
-            onError={() => setImageError(true)}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            referrerPolicy="no-referrer"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-tr from-amber-50 to-orange-50 text-amber-800">
-            <Utensils className="w-8 h-8 text-amber-500 mb-2 opacity-60" />
-            <span className="text-xs font-semibold text-center line-clamp-2">
-              {food.name}
-            </span>
-          </div>
-        )}
+        <FoodImage
+          src={food.image}
+          alt={food.name}
+          categoryId={food.categoryId}
+          categoryName={food.categoryName}
+          aspectRatioClass="aspect-[4/3]"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        />
 
         {/* Stock status overlay if out of stock */}
         {isOutOfStock && (

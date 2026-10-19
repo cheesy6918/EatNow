@@ -28,10 +28,20 @@ interface ToastState {
   type: 'success' | 'error' | 'info';
 }
 
-interface AppContextType {
-  currentUser: User;
-  users: User[];
+interface RegisterData {
+  name: string;
+  mssv: string;
+  emailOrPhone: string;
+  password: string;
   role: Role;
+  className?: string;
+}
+
+interface AppContextType {
+  currentUser: User | null;
+  users: User[];
+  role: Role | null;
+  isAuthenticated: boolean;
   switchRole: (newRole: Role) => void;
   categories: Category[];
   foods: FoodItem[];
@@ -40,7 +50,7 @@ interface AppContextType {
   transactions: WalletTransaction[];
   reviews: Review[];
   pickupSlots: string[];
-  
+
   // Filters & Search
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -54,7 +64,7 @@ interface AppContextType {
   setPriceFilter: (filter: 'all' | 'under30' | '30to45' | 'above45') => void;
   healthyOnly: boolean;
   setHealthyOnly: (val: boolean) => void;
-  
+
   // Modals & Navigation
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
@@ -64,6 +74,9 @@ interface AppContextType {
   setIsProfileModalOpen: (open: boolean) => void;
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: (open: boolean) => void;
+  authModalMode: 'login' | 'register';
+  setAuthModalMode: (mode: 'login' | 'register') => void;
+  openAuthModal: (mode?: 'login' | 'register') => void;
   selectedFood: FoodItem | null;
   setSelectedFood: (food: FoodItem | null) => void;
   selectedOrderForDetail: Order | null;
@@ -72,8 +85,8 @@ interface AppContextType {
   setReceiptOrder: (order: Order | null) => void;
   reviewingOrder: Order | null;
   setReviewingOrder: (order: Order | null) => void;
-  activeNavTab: 'menu' | 'my-orders' | 'staff-orders' | 'admin-dashboard';
-  setActiveNavTab: (tab: 'menu' | 'my-orders' | 'staff-orders' | 'admin-dashboard') => void;
+  activeNavTab: 'menu' | 'my-orders' | 'staff-orders' | 'admin-dashboard' | 'login' | 'register';
+  setActiveNavTab: (tab: 'menu' | 'my-orders' | 'staff-orders' | 'admin-dashboard' | 'login' | 'register') => void;
 
   // Vouchers & Dining
   vouchers: Voucher[];
@@ -98,15 +111,17 @@ interface AppContextType {
   createOrder: (pickupSlot: string) => Promise<{ success: boolean; orderId?: string; error?: string }>;
   cancelOrder: (orderId: string, reason?: string) => void;
   updateOrderStatus: (orderId: string, newStatus: OrderStatus, cancelReason?: string) => void;
-  
+
   depositWallet: (amount: number) => void;
   addReview: (orderId: string, foodId: string, rating: number, comment: string) => void;
   updateUserProfile: (data: Partial<User>) => void;
-  
+
   switchUser: (userId: string) => void;
-  loginUser: (email: string) => boolean;
-  registerUser: (name: string, email: string, phone: string, className: string, role: Role) => void;
-  
+  loginUser: (identifier: string, password?: string) => boolean;
+  quickLoginDemoUser: (userId: string) => void;
+  registerUser: (data: RegisterData) => boolean;
+  logoutUser: () => void;
+
   // Admin Operations
   adminAddFood: (foodData: Omit<FoodItem, 'id' | 'rating' | 'reviewCount'>) => void;
   adminUpdateFood: (foodId: string, updates: Partial<FoodItem>) => void;
@@ -124,37 +139,38 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Load initial states with localStorage support
+  // Load users list with localStorage support
   const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('eatnow_users_v5');
+    const saved = localStorage.getItem('eatnow_users_v6');
     if (!saved) return INITIAL_USERS;
     try {
       const parsed: User[] = JSON.parse(saved);
       return INITIAL_USERS.map((initial) => {
         const found = parsed.find((p) => p.id === initial.id || p.email === initial.email);
-        return found ? { ...initial, walletBalance: found.walletBalance ?? initial.walletBalance } : initial;
+        return found ? { ...initial, ...found } : initial;
       });
     } catch {
       return INITIAL_USERS;
     }
   });
 
-  const [currentUser, setCurrentUser] = useState<User>(() => {
-    const saved = localStorage.getItem('eatnow_current_user_v5');
-    if (!saved) return INITIAL_USERS[0];
+  // Current logged in user: default null (Guest / not logged in) unless stored in localStorage
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('eatnow_auth_user');
+    if (!saved) return null;
     try {
       const parsed: User = JSON.parse(saved);
       const found = INITIAL_USERS.find((u) => u.id === parsed.id || u.email === parsed.email);
-      return found ? { ...found, walletBalance: parsed.walletBalance ?? found.walletBalance } : INITIAL_USERS[0];
+      return found ? { ...found, ...parsed } : parsed;
     } catch {
-      return INITIAL_USERS[0];
+      return null;
     }
   });
 
   const [categories] = useState<Category[]>(INITIAL_CATEGORIES);
 
   const [foods, setFoods] = useState<FoodItem[]>(() => {
-    const saved = localStorage.getItem('eatnow_foods_v6');
+    const saved = localStorage.getItem('eatnow_foods_v7');
     if (!saved) return INITIAL_FOODS;
     try {
       const parsed: FoodItem[] = JSON.parse(saved);
@@ -162,6 +178,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const initial = INITIAL_FOODS.find((f) => f.id === item.id);
         return {
           ...item,
+          image: initial?.image || item.image,
           nutrition: item.nutrition || initial?.nutrition,
           allergens: item.allergens || initial?.allergens,
           dietaryTags: item.dietaryTags || initial?.dietaryTags,
@@ -215,11 +232,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<Order | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
   const [reviewingOrder, setReviewingOrder] = useState<Order | null>(null);
-  const [activeNavTab, setActiveNavTab] = useState<'menu' | 'my-orders' | 'staff-orders' | 'admin-dashboard'>('menu');
+  const [activeNavTab, setActiveNavTab] = useState<
+    'menu' | 'my-orders' | 'staff-orders' | 'admin-dashboard' | 'login' | 'register'
+  >(() => {
+    if (typeof window === 'undefined') return 'menu';
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    if (path === '/login' || hash === '#login') return 'login';
+    if (path === '/register' || hash === '#register') return 'register';
+    if (path === '/staff-orders' || hash === '#staff-orders') return 'staff-orders';
+    if (path === '/admin-dashboard' || hash === '#admin-dashboard') return 'admin-dashboard';
+    if (path === '/my-orders' || hash === '#my-orders') return 'my-orders';
+    return 'menu';
+  });
+
+  // Keep browser URL pathname in sync with activeNavTab
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (activeNavTab === 'login') {
+      if (window.location.pathname !== '/login') {
+        window.history.pushState({}, '', '/login');
+      }
+    } else if (activeNavTab === 'register') {
+      if (window.location.pathname !== '/register') {
+        window.history.pushState({}, '', '/register');
+      }
+    } else if (activeNavTab === 'menu') {
+      if (window.location.pathname === '/login' || window.location.pathname === '/register') {
+        window.history.pushState({}, '', '/');
+      }
+    }
+  }, [activeNavTab]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path === '/login' || hash === '#login') setActiveNavTab('login');
+      else if (path === '/register' || hash === '#register') setActiveNavTab('register');
+      else if (path === '/staff-orders' || hash === '#staff-orders') setActiveNavTab('staff-orders');
+      else if (path === '/admin-dashboard' || hash === '#admin-dashboard') setActiveNavTab('admin-dashboard');
+      else if (path === '/my-orders' || hash === '#my-orders') setActiveNavTab('my-orders');
+      else setActiveNavTab('menu');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Vouchers & Dining
   const [vouchers, setVouchers] = useState<Voucher[]>(() => {
@@ -237,17 +300,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('eatnow_vouchers', JSON.stringify(vouchers));
   }, [vouchers]);
 
-  // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('eatnow_users_v5', JSON.stringify(users));
+    localStorage.setItem('eatnow_users_v6', JSON.stringify(users));
   }, [users]);
 
   useEffect(() => {
-    localStorage.setItem('eatnow_current_user_v5', JSON.stringify(currentUser));
+    if (currentUser) {
+      localStorage.setItem('eatnow_auth_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('eatnow_auth_user');
+    }
   }, [currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('eatnow_foods_v6', JSON.stringify(foods));
+    localStorage.setItem('eatnow_foods_v7', JSON.stringify(foods));
   }, [foods]);
 
   useEffect(() => {
@@ -278,12 +344,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const openAuthModal = (mode: 'login' | 'register' = 'login') => {
+    setAuthModalMode(mode);
+    setIsAuthModalOpen(false);
+    setActiveNavTab(mode);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   // Role Switcher
   const switchRole = (newRole: Role) => {
     const matchedUser = users.find((u) => u.role === newRole);
     if (matchedUser) {
       setCurrentUser(matchedUser);
-      showToast(`Đã chuyển sang vai trò: ${newRole === 'customer' ? 'Sinh viên' : newRole === 'staff' ? 'Nhân viên Căn tin' : 'Quản trị viên'}`, 'info');
+      localStorage.setItem('eatnow_auth_user', JSON.stringify(matchedUser));
+      const roleText =
+        newRole === 'customer'
+          ? 'Sinh viên'
+          : newRole === 'lecturer'
+          ? 'Giảng viên'
+          : newRole === 'staff'
+          ? 'Nhân viên Căn tin'
+          : 'Quản trị viên';
+      showToast(`Đã chuyển sang vai trò: ${roleText}`, 'info');
       if (newRole === 'staff') {
         setActiveNavTab('staff-orders');
       } else if (newRole === 'admin') {
@@ -294,14 +378,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Direct User Switcher for Team Members
+  // Direct User Switcher for Team Members/Admin
   const switchUser = (userId: string) => {
     const found = users.find((u) => u.id === userId);
     if (found) {
       setCurrentUser(found);
+      localStorage.setItem('eatnow_auth_user', JSON.stringify(found));
       const roleTitle =
         found.role === 'customer'
           ? 'Sinh viên'
+          : found.role === 'lecturer'
+          ? 'Giảng viên'
           : found.role === 'staff'
           ? 'Nhân viên Căn tin'
           : 'Quản trị viên';
@@ -316,8 +403,183 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Login handler
+  const loginUser = (identifier: string, password?: string): boolean => {
+    const term = identifier.trim().toLowerCase();
+    if (!term) {
+      showToast('Vui lòng nhập Email hoặc Mã sinh viên / Mã nhân viên!', 'error');
+      return false;
+    }
+
+    const found = users.find(
+      (u) =>
+        u.email.toLowerCase() === term ||
+        (u.mssv && u.mssv.toLowerCase() === term) ||
+        u.phone.replace(/\s+/g, '') === term.replace(/\s+/g, '')
+    );
+
+    if (!found) {
+      showToast('Tài khoản không tồn tại trong hệ thống. Vui lòng đăng ký hoặc dùng tài khoản Demo!', 'error');
+      return false;
+    }
+
+    if (password !== undefined) {
+      const expectedPw = found.password || '123456';
+      if (password !== expectedPw) {
+        showToast('Mật khẩu không chính xác! (Mật khẩu mặc định là 123456)', 'error');
+        return false;
+      }
+    }
+
+    setCurrentUser(found);
+    localStorage.setItem('eatnow_auth_user', JSON.stringify(found));
+    setIsAuthModalOpen(false);
+
+    const roleName =
+      found.role === 'customer'
+        ? 'Sinh viên'
+        : found.role === 'lecturer'
+        ? 'Giảng viên'
+        : found.role === 'staff'
+        ? 'Nhân viên Căn tin'
+        : 'Quản trị viên';
+
+    showToast(`Đăng nhập thành công! Xin chào, ${found.name} (${roleName})`, 'success');
+
+    if (found.role === 'staff') {
+      setActiveNavTab('staff-orders');
+    } else if (found.role === 'admin') {
+      setActiveNavTab('admin-dashboard');
+    } else {
+      setActiveNavTab('menu');
+    }
+    return true;
+  };
+
+  // Quick Demo Login
+  const quickLoginDemoUser = (userId: string) => {
+    const found = users.find((u) => u.id === userId);
+    if (found) {
+      setCurrentUser(found);
+      localStorage.setItem('eatnow_auth_user', JSON.stringify(found));
+      setIsAuthModalOpen(false);
+
+      const roleName =
+        found.role === 'customer'
+          ? 'Sinh viên'
+          : found.role === 'lecturer'
+          ? 'Giảng viên'
+          : found.role === 'staff'
+          ? 'Nhân viên Căn tin'
+          : 'Quản trị viên';
+
+      showToast(`Đăng nhập Demo thành công: ${found.name} (${roleName})`, 'success');
+
+      if (found.role === 'staff') {
+        setActiveNavTab('staff-orders');
+      } else if (found.role === 'admin') {
+        setActiveNavTab('admin-dashboard');
+      } else {
+        setActiveNavTab('menu');
+      }
+    }
+  };
+
+  // Register handler
+  const registerUser = (data: RegisterData): boolean => {
+    const { name, mssv, emailOrPhone, password, role: userRole, className } = data;
+
+    if (!name.trim()) {
+      showToast('Vui lòng nhập Họ và tên!', 'error');
+      return false;
+    }
+    if (!mssv.trim()) {
+      showToast('Vui lòng nhập Mã sinh viên / Mã nhân viên / Giảng viên!', 'error');
+      return false;
+    }
+    if (!emailOrPhone.trim()) {
+      showToast('Vui lòng nhập Email hoặc Số điện thoại!', 'error');
+      return false;
+    }
+    if (!password || password.length < 6) {
+      showToast('Mật khẩu tối thiểu phải từ 6 ký tự!', 'error');
+      return false;
+    }
+
+    const termMssv = mssv.trim().toLowerCase();
+    const existingMssv = users.find(
+      (u) => u.mssv && u.mssv.toLowerCase() === termMssv
+    );
+    if (existingMssv) {
+      showToast(`Mã "${mssv}" đã tồn tại trong hệ thống!`, 'error');
+      return false;
+    }
+
+    const isEmail = emailOrPhone.includes('@');
+    const userEmail = isEmail ? emailOrPhone.trim() : `${mssv.toLowerCase()}@eatnow.edu.vn`;
+    const userPhone = !isEmail ? emailOrPhone.trim() : '09' + Math.floor(10000000 + Math.random() * 90000000);
+
+    const newUser: User = {
+      id: `user-${Date.now()}`,
+      name: name.trim(),
+      mssv: mssv.trim(),
+      email: userEmail,
+      phone: userPhone,
+      password,
+      role: userRole,
+      walletBalance: 100000, // Tặng ngay 100.000₫ vào Ví CanteenGo
+      className: className?.trim() || (userRole === 'customer' ? 'K22-CNTT' : userRole === 'lecturer' ? 'Khoa CNTT' : 'Nhân sự Căn tin'),
+      department: userRole === 'staff' ? 'Nhân viên Quầy Căn tin' : userRole === 'admin' ? 'Ban Quản trị' : undefined,
+      avatar: userRole === 'lecturer'
+        ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80'
+        : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+    };
+
+    setUsers((prev) => [...prev, newUser]);
+    setCurrentUser(newUser);
+    localStorage.setItem('eatnow_auth_user', JSON.stringify(newUser));
+    setIsAuthModalOpen(false);
+
+    // Initial gift transaction
+    const tx: WalletTransaction = {
+      id: `tx-gift-${Date.now()}`,
+      userId: newUser.id,
+      type: 'deposit',
+      amount: 100000,
+      timestamp: new Date().toISOString(),
+      description: 'Quà tặng thành viên mới Ví CanteenGo (+100.000₫)',
+      status: 'success',
+    };
+    setTransactions((prev) => [tx, ...prev]);
+
+    showToast(`Đăng ký thành công! Tặng ngay 100.000₫ vào Ví CanteenGo cho bạn.`, 'success');
+
+    if (userRole === 'staff') {
+      setActiveNavTab('staff-orders');
+    } else if (userRole === 'admin') {
+      setActiveNavTab('admin-dashboard');
+    } else {
+      setActiveNavTab('menu');
+    }
+    return true;
+  };
+
+  // Logout handler
+  const logoutUser = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('eatnow_auth_user');
+    setActiveNavTab('menu');
+    showToast('Đã đăng xuất khỏi tài khoản!', 'info');
+  };
+
   // Cart operations
   const addToCart = (food: FoodItem, quantity: number = 1, note: string = '') => {
+    if (!currentUser) {
+      showToast('Vui lòng đăng nhập để chọn món và thêm vào giỏ hàng!', 'info');
+      openAuthModal('login');
+      return;
+    }
+
     if (!food.isAvailable || food.stockQuantity <= 0) {
       showToast('Món ăn hiện đã hết hàng, vui lòng chọn món khác!', 'error');
       return;
@@ -416,6 +678,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Wallet operations
   const depositWallet = (amount: number) => {
+    if (!currentUser) {
+      showToast('Vui lòng đăng nhập để nạp tiền vào Ví!', 'info');
+      openAuthModal('login');
+      return;
+    }
     if (amount <= 0) return;
     const newBalance = currentUser.walletBalance + amount;
     const updatedUser = { ...currentUser, walletBalance: newBalance };
@@ -439,6 +706,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Order Placement
   const createOrder = async (pickupSlot: string): Promise<{ success: boolean; orderId?: string; error?: string }> => {
+    if (!currentUser) {
+      showToast('Vui lòng đăng nhập để tiến hành đặt món!', 'info');
+      openAuthModal('login');
+      return { success: false, error: 'Chưa đăng nhập' };
+    }
+
     if (cart.length === 0) {
       return { success: false, error: 'Giỏ hàng đang trống!' };
     }
@@ -523,7 +796,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       tableNumber: diningOption === 'dine_in' ? tableNumber : undefined,
       voucherCode: appliedVoucher?.code,
       discountAmount: voucherDiscount,
-      status: 'paid_pending_confirm', // UC-02: Đã thanh toán - Chờ xác nhận
+      status: 'paid_pending_confirm',
       createdAt: new Date().toISOString(),
       paymentMethod: 'wallet',
       paymentStatus: 'paid',
@@ -572,12 +845,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (orderUser) {
         const refundedBalance = orderUser.walletBalance + order.totalAmount;
         const updatedOrderUser = { ...orderUser, walletBalance: refundedBalance };
-        
+
         setUsers((prev) =>
           prev.map((u) => (u.id === order.userId ? updatedOrderUser : u))
         );
 
-        if (currentUser.id === order.userId) {
+        if (currentUser && currentUser.id === order.userId) {
           setCurrentUser(updatedOrderUser);
         }
 
@@ -663,6 +936,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Add review
   const addReview = (orderId: string, foodId: string, rating: number, comment: string) => {
+    if (!currentUser) {
+      showToast('Vui lòng đăng nhập để đánh giá món ăn!', 'info');
+      openAuthModal('login');
+      return;
+    }
+
     const food = foods.find((f) => f.id === foodId);
     if (!food) return;
 
@@ -712,66 +991,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateUserProfile = (data: Partial<User>) => {
+    if (!currentUser) return;
     const updated = { ...currentUser, ...data };
     setCurrentUser(updated);
     setUsers((prev) =>
       prev.map((u) => (u.id === currentUser.id ? updated : u))
     );
     showToast('Cập nhật thông tin thành công!', 'success');
-  };
-
-  const loginUser = (identifier: string): boolean => {
-    const term = identifier.trim().toLowerCase();
-    const found = users.find(
-      (u) =>
-        u.email.toLowerCase() === term ||
-        (u.mssv && u.mssv.toLowerCase() === term)
-    );
-    if (found) {
-      setCurrentUser(found);
-      setIsAuthModalOpen(false);
-      showToast(`Đăng nhập thành công! Xin chào, ${found.name}`, 'success');
-      if (found.role === 'staff') setActiveNavTab('staff-orders');
-      else if (found.role === 'admin') setActiveNavTab('admin-dashboard');
-      else setActiveNavTab('menu');
-      return true;
-    }
-    showToast('Email hoặc MSSV không tồn tại trong hệ thống demo!', 'error');
-    return false;
-  };
-
-  const registerUser = (name: string, email: string, phone: string, className: string, userRole: Role) => {
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      name,
-      email,
-      phone,
-      className,
-      role: userRole,
-      walletBalance: 100000, // Gift initial 100.000 VND demo balance
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-    };
-
-    setUsers((prev) => [...prev, newUser]);
-    setCurrentUser(newUser);
-    setIsAuthModalOpen(false);
-
-    // Add initial gift transaction
-    const tx: WalletTransaction = {
-      id: `tx-gift-${Date.now()}`,
-      userId: newUser.id,
-      type: 'deposit',
-      amount: 100000,
-      timestamp: new Date().toISOString(),
-      description: 'Quà tặng tân sinh viên Ví CanteenGo (+100.000₫)',
-      status: 'success',
-    };
-    setTransactions((prev) => [tx, ...prev]);
-
-    showToast(`Đăng ký tài khoản thành công! Tặng bạn 100.000₫ vào Ví CanteenGo.`, 'success');
-    if (userRole === 'staff') setActiveNavTab('staff-orders');
-    else if (userRole === 'admin') setActiveNavTab('admin-dashboard');
-    else setActiveNavTab('menu');
   };
 
   // Admin Food Management
@@ -834,7 +1060,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         currentUser,
         users,
-        role: currentUser.role,
+        role: currentUser?.role ?? null,
+        isAuthenticated: !!currentUser,
         switchRole,
         categories,
         foods,
@@ -865,6 +1092,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsProfileModalOpen,
         isAuthModalOpen,
         setIsAuthModalOpen,
+        authModalMode,
+        setAuthModalMode,
+        openAuthModal,
         selectedFood,
         setSelectedFood,
         selectedOrderForDetail,
@@ -904,7 +1134,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         switchUser,
         loginUser,
+        quickLoginDemoUser,
         registerUser,
+        logoutUser,
 
         adminAddFood,
         adminUpdateFood,

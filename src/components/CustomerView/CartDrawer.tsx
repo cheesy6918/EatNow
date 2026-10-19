@@ -40,6 +40,7 @@ export const CartDrawer: React.FC = () => {
     setDiningOption,
     tableNumber,
     setTableNumber,
+    openAuthModal,
   } = useApp();
 
   const [selectedSlot, setSelectedSlot] = useState(pickupSlots[2] || '11:15 - 11:30');
@@ -124,6 +125,11 @@ export const CartDrawer: React.FC = () => {
                       <img
                         src={item.foodItem.image}
                         alt={item.foodItem.name}
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src =
+                            'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80';
+                        }}
                         className="w-16 h-16 rounded-xl object-cover shrink-0 border border-slate-200 bg-slate-200"
                         referrerPolicy="no-referrer"
                       />
@@ -356,17 +362,35 @@ export const CartDrawer: React.FC = () => {
                   )}
                 </div>
 
-                {/* Student Info Verification */}
-                <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/60 text-xs space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                    <User className="w-3.5 h-3.5 text-amber-700" />
-                    <span>Thông tin nhận món:</span>
+                {/* Student / User Info Verification */}
+                {currentUser ? (
+                  <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/60 text-xs space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                      <User className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Thông tin nhận món:</span>
+                    </div>
+                    <div className="text-slate-700">
+                      <strong>{currentUser.name}</strong>{currentUser.mssv ? ` (Mã: ${currentUser.mssv})` : ''} · {currentUser.phone}
+                      {currentUser.className && ` · ${currentUser.className}`}
+                    </div>
                   </div>
-                  <div className="text-slate-700">
-                    <strong>{currentUser.name}</strong>{currentUser.mssv ? ` (MSSV: ${currentUser.mssv})` : ''} · {currentUser.phone}
-                    {currentUser.className && ` · Lớp: ${currentUser.className}`}
+                ) : (
+                  <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200 text-xs flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-amber-700 shrink-0" />
+                      <span className="text-amber-900 font-medium">
+                        Bạn chưa đăng nhập. Vui lòng đăng nhập để hoàn tất đơn.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openAuthModal('login')}
+                      className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0"
+                    >
+                      Đăng nhập
+                    </button>
                   </div>
-                </div>
+                )}
               </>
             )}
           </div>
@@ -405,13 +429,23 @@ export const CartDrawer: React.FC = () => {
               </div>
 
               {/* Checkout Button */}
-              <button
-                onClick={() => setIsPaymentModalOpen(true)}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md active:scale-98 transition-all"
-              >
-                <span>Xác nhận & Thanh toán Ví</span>
-                <ArrowRight className="w-4 h-4 text-amber-400" />
-              </button>
+              {currentUser ? (
+                <button
+                  onClick={() => setIsPaymentModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md active:scale-98 transition-all"
+                >
+                  <span>Xác nhận & Thanh toán Ví</span>
+                  <ArrowRight className="w-4 h-4 text-amber-400" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => openAuthModal('login')}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-sm shadow-md active:scale-98 transition-all"
+                >
+                  <span>Đăng nhập để đặt món</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
         </div>

@@ -19,11 +19,12 @@ import {
   Info,
 } from 'lucide-react';
 
+import { FoodImage } from '../common/FoodImage';
+
 export const FoodDetailModal: React.FC = () => {
-  const { selectedFood, setSelectedFood, addToCart, reviews } = useApp();
+  const { selectedFood, setSelectedFood, addToCart, reviews, currentUser, openAuthModal, showToast } = useApp();
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
-  const [imageError, setImageError] = useState(false);
   const [activeTab, setActiveTab] = useState<'info' | 'nutrition' | 'reviews'>('info');
 
   if (!selectedFood) return null;
@@ -56,6 +57,11 @@ export const FoodDetailModal: React.FC = () => {
   const hasAllergens = allergens.length > 0;
 
   const handleAddToCart = () => {
+    if (!currentUser) {
+      showToast('Vui lòng đăng nhập để thêm món vào giỏ hàng!', 'info');
+      openAuthModal('login');
+      return;
+    }
     addToCart(selectedFood, quantity, note);
     setSelectedFood(null);
   };
@@ -74,19 +80,14 @@ export const FoodDetailModal: React.FC = () => {
 
         {/* Hero Image */}
         <div className="relative aspect-[16/9] w-full bg-slate-100 overflow-hidden shrink-0 max-h-56 sm:max-h-64">
-          {!imageError ? (
-            <img
-              src={selectedFood.image}
-              alt={selectedFood.name}
-              onError={() => setImageError(true)}
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-800 font-medium">
-              {selectedFood.name}
-            </div>
-          )}
+          <FoodImage
+            src={selectedFood.image}
+            alt={selectedFood.name}
+            categoryId={selectedFood.categoryId}
+            categoryName={selectedFood.categoryName}
+            aspectRatioClass="aspect-[16/9]"
+            className="w-full h-full object-cover"
+          />
 
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
 

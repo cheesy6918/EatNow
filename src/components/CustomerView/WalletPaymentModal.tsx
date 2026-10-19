@@ -37,6 +37,8 @@ export const WalletPaymentModal: React.FC<WalletPaymentModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  if (!currentUser) return null;
+
   const amountToPay = finalCartTotal;
   const isBalanceSufficient = currentUser.walletBalance >= amountToPay;
   const deficit = amountToPay - currentUser.walletBalance;

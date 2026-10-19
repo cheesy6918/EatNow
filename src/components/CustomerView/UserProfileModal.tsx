@@ -11,17 +11,19 @@ export const UserProfileModal: React.FC = () => {
     setIsAuthModalOpen,
   } = useApp();
 
-  const [name, setName] = useState(currentUser.name);
-  const [phone, setPhone] = useState(currentUser.phone);
-  const [className, setClassName] = useState(currentUser.department || currentUser.className || '');
+  const [name, setName] = useState(currentUser?.name || '');
+  const [phone, setPhone] = useState(currentUser?.phone || '');
+  const [className, setClassName] = useState(currentUser?.department || currentUser?.className || '');
 
   useEffect(() => {
-    setName(currentUser.name);
-    setPhone(currentUser.phone);
-    setClassName(currentUser.department || currentUser.className || '');
+    if (currentUser) {
+      setName(currentUser.name);
+      setPhone(currentUser.phone);
+      setClassName(currentUser.department || currentUser.className || '');
+    }
   }, [currentUser]);
 
-  if (!isProfileModalOpen) return null;
+  if (!isProfileModalOpen || !currentUser) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

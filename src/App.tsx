@@ -1,6 +1,5 @@
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import { RoleSwitcherBar } from './components/RoleSwitcherBar';
 import { Navbar } from './components/Navbar';
 import { HeroBanner } from './components/CustomerView/HeroBanner';
 import { MenuFilter } from './components/CustomerView/MenuFilter';
@@ -13,10 +12,12 @@ import { WalletModal } from './components/CustomerView/WalletModal';
 import { UserProfileModal } from './components/CustomerView/UserProfileModal';
 import { StaffDashboard } from './components/StaffView/StaffDashboard';
 import { AdminDashboard } from './components/AdminView/AdminDashboard';
-import { AuthModal } from './components/AuthModal';
+import { LoginPage } from './components/AuthView/LoginPage';
+import { RegisterPage } from './components/AuthView/RegisterPage';
 import { ToastContainer } from './components/ToastContainer';
 import { OrderReceiptModal } from './components/CustomerView/OrderReceiptModal';
 import { FoodReviewModal } from './components/CustomerView/FoodReviewModal';
+import { MarqueeBanner } from './components/CustomerView/MarqueeBanner';
 import {
   UtensilsCrossed,
   Clock,
@@ -24,12 +25,15 @@ import {
   HeartHandshake,
   PhoneCall,
   MapPin,
-  Sparkles,
+  ChefHat,
+  BarChart3,
+  Lock,
 } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
   const {
     role,
+    isAuthenticated,
     activeNavTab,
     selectedFood,
     selectedOrderForDetail,
@@ -38,28 +42,29 @@ const MainLayout: React.FC = () => {
     setReceiptOrder,
     reviewingOrder,
     setReviewingOrder,
+    openAuthModal,
+    setActiveNavTab,
   } = useApp();
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 antialiased">
-      {/* 1. Portal Role Quick-Switcher */}
-      <RoleSwitcherBar />
-
-      {/* 2. Primary Navigation */}
+      {/* 1. Primary Navigation (Role Switcher bar removed per requirement 1) */}
       <Navbar />
 
-      {/* 3. Main Body Content */}
+      {/* 2. Main Body Content */}
       <main className="flex-1 pb-16">
         {/* Render View by Nav Tab */}
         {activeNavTab === 'menu' && (
           <div className="space-y-6">
+            {/* Announcement Marquee Bar right above Hero Banner */}
+            <MarqueeBanner />
             <HeroBanner />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <MenuFilter />
               <FoodGrid />
 
-              {/* Service Commitments Strip (Editorial Adjacency) */}
+              {/* Service Commitments Strip */}
               <section className="mt-12 p-8 rounded-3xl bg-white border border-slate-200">
                 <div className="max-w-2xl">
                   <span className="text-xs font-bold uppercase tracking-wider text-amber-600 block mb-1">
@@ -117,12 +122,74 @@ const MainLayout: React.FC = () => {
 
         {activeNavTab === 'my-orders' && <MyOrdersView />}
 
-        {activeNavTab === 'staff-orders' && <StaffDashboard />}
+        {activeNavTab === 'staff-orders' &&
+          (role === 'staff' || role === 'admin' ? (
+            <StaffDashboard />
+          ) : (
+            <div className="max-w-md mx-auto my-16 p-8 bg-white rounded-3xl border border-slate-200 text-center space-y-4 shadow-sm">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 mx-auto flex items-center justify-center">
+                <ChefHat className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">
+                Khu vực Quản lý Bếp Căn tin
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Trang này dành riêng cho nhân viên căn tin tiếp nhận và xử lý đơn món. Vui lòng đăng nhập với tài khoản nhân viên.
+              </p>
+              <div className="flex justify-center gap-2 pt-2">
+                <button
+                  onClick={() => openAuthModal('login')}
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                >
+                  Đăng nhập Nhân viên
+                </button>
+                <button
+                  onClick={() => setActiveNavTab('menu')}
+                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold"
+                >
+                  Về thực đơn
+                </button>
+              </div>
+            </div>
+          ))}
 
-        {activeNavTab === 'admin-dashboard' && <AdminDashboard />}
+        {activeNavTab === 'admin-dashboard' &&
+          (role === 'admin' ? (
+            <AdminDashboard />
+          ) : (
+            <div className="max-w-md mx-auto my-16 p-8 bg-white rounded-3xl border border-slate-200 text-center space-y-4 shadow-sm">
+              <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-700 mx-auto flex items-center justify-center">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">
+                Khu vực Quản trị viên
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Trang này dành cho quản trị viên hệ thống quản lý thực đơn, người dùng và xuất báo cáo dữ liệu.
+              </p>
+              <div className="flex justify-center gap-2 pt-2">
+                <button
+                  onClick={() => openAuthModal('login')}
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                >
+                  Đăng nhập Quản trị viên
+                </button>
+                <button
+                  onClick={() => setActiveNavTab('menu')}
+                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold"
+                >
+                  Về thực đơn
+                </button>
+              </div>
+            </div>
+          ))}
+
+        {/* 4. Dedicated Authentication Views (Separate Pages) */}
+        {activeNavTab === 'login' && <LoginPage />}
+        {activeNavTab === 'register' && <RegisterPage />}
       </main>
 
-      {/* 4. Quiet Editorial Footer */}
+      {/* 3. Quiet Editorial Footer */}
       <footer className="bg-white border-t border-slate-200 text-slate-500 text-xs py-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2">
@@ -183,7 +250,6 @@ const MainLayout: React.FC = () => {
       )}
       <WalletModal />
       <UserProfileModal />
-      <AuthModal />
       {receiptOrder && (
         <OrderReceiptModal
           order={receiptOrder}

@@ -1,4 +1,4 @@
-export type Role = 'customer' | 'staff' | 'admin';
+export type Role = 'customer' | 'lecturer' | 'staff' | 'admin';
 
 export interface User {
   id: string;
@@ -6,6 +6,7 @@ export interface User {
   mssv?: string;
   email: string;
   phone: string;
+  password?: string;
   role: Role;
   walletBalance: number;
   avatar?: string;

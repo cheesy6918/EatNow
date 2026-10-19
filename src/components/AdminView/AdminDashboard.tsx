@@ -469,6 +469,11 @@ export const AdminDashboard: React.FC = () => {
                       <img
                         src={item.image}
                         alt={item.name}
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src =
+                            'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80';
+                        }}
                         className="w-10 h-10 rounded-lg object-cover bg-slate-200 shrink-0"
                         referrerPolicy="no-referrer"
                       />
@@ -604,6 +609,11 @@ export const AdminDashboard: React.FC = () => {
                         <img
                           src={food.image}
                           alt={food.name}
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80';
+                          }}
                           className="w-10 h-10 rounded-lg object-cover bg-slate-100 shrink-0 border border-slate-200"
                           referrerPolicy="no-referrer"
                         />

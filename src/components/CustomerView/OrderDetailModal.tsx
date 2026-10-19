@@ -252,6 +252,11 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                     <img
                       src={item.image}
                       alt={item.name}
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80';
+                      }}
                       className="w-11 h-11 rounded-lg object-cover bg-slate-100 shrink-0"
                       referrerPolicy="no-referrer"
                     />

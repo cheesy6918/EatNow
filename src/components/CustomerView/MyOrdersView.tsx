@@ -27,8 +27,41 @@ export const MyOrdersView: React.FC = () => {
     setReceiptOrder,
     reviewingOrder,
     setReviewingOrder,
+    openAuthModal,
   } = useApp();
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
+
+  if (!currentUser) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16">
+        <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center shadow-xs">
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4">
+            <ClipboardList className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
+            Đăng nhập để xem Đơn của tôi
+          </h2>
+          <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
+            Bạn cần đăng nhập để theo dõi trạng thái đơn hàng theo thời gian thực, xem mã nhận món và nhận hóa đơn thanh toán.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              onClick={() => openAuthModal('login')}
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-sm transition-all"
+            >
+              Đăng nhập ngay
+            </button>
+            <button
+              onClick={() => setActiveNavTab('menu')}
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-sm transition-all"
+            >
+              Xem thực đơn căn tin
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const myOrders = orders.filter((o) => o.userId === currentUser.id);
 
