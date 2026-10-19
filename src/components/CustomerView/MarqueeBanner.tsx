@@ -2,8 +2,25 @@ import React from 'react';
 import { Megaphone, Zap, Sparkles } from 'lucide-react';
 
 export const MarqueeBanner: React.FC = () => {
-  const announcementText =
+  const defaultText =
     "🎉 Chào mừng đến với Căn tin EatNow! Đặt trước nhận ngay — Giảm 10% cho đơn hàng đầu tiên qua Ví CanteenGo | Thực đơn trưa phục vụ từ 10:30 đến 13:30 mỗi ngày | Chúc bạn một bữa ăn ngon miệng! 🍱🥤";
+
+  const [announcementText, setAnnouncementText] = React.useState<string>(() => {
+    return localStorage.getItem('eatnow_announcement') || defaultText;
+  });
+
+  React.useEffect(() => {
+    const handleUpdate = () => {
+      const val = localStorage.getItem('eatnow_announcement');
+      if (val) setAnnouncementText(val);
+    };
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener('eatnow_announcement_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('eatnow_announcement_updated', handleUpdate);
+    };
+  }, []);
 
   return (
     <div className="bg-amber-50/90 border-b border-amber-200/80 text-slate-800 text-xs py-2 px-3 sm:px-4 overflow-hidden relative select-none">

@@ -44,6 +44,7 @@ const MainLayout: React.FC = () => {
     setReviewingOrder,
     openAuthModal,
     setActiveNavTab,
+    quickLoginDemoUser,
   } = useApp();
 
   return (
@@ -138,14 +139,21 @@ const MainLayout: React.FC = () => {
               </p>
               <div className="flex justify-center gap-2 pt-2">
                 <button
-                  onClick={() => openAuthModal('login')}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                  onClick={() => quickLoginDemoUser('user-nv-01')}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
-                  Đăng nhập Nhân viên
+                  <ChefHat className="w-4 h-4" />
+                  <span>Đăng nhập Bếp (1 chạm)</span>
+                </button>
+                <button
+                  onClick={() => setActiveNavTab('login')}
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs cursor-pointer"
+                >
+                  Đến trang Đăng nhập
                 </button>
                 <button
                   onClick={() => setActiveNavTab('menu')}
-                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer"
                 >
                   Về thực đơn
                 </button>
@@ -165,18 +173,25 @@ const MainLayout: React.FC = () => {
                 Khu vực Quản trị viên
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Trang này dành cho quản trị viên hệ thống quản lý thực đơn, người dùng và xuất báo cáo dữ liệu.
+                Trang này dành cho quản trị viên hệ thống quản lý thực đơn, duyệt đơn hàng, người dùng và xuất báo cáo dữ liệu.
               </p>
-              <div className="flex justify-center gap-2 pt-2">
+              <div className="flex flex-wrap justify-center gap-2 pt-2">
                 <button
-                  onClick={() => openAuthModal('login')}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                  onClick={() => quickLoginDemoUser('user-admin-01')}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
-                  Đăng nhập Quản trị viên
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Đăng nhập Admin (1 chạm)</span>
+                </button>
+                <button
+                  onClick={() => setActiveNavTab('login')}
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs cursor-pointer"
+                >
+                  Đến trang Đăng nhập
                 </button>
                 <button
                   onClick={() => setActiveNavTab('menu')}
-                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer"
                 >
                   Về thực đơn
                 </button>

@@ -78,12 +78,88 @@ export const LoginPage: React.FC = () => {
             </p>
           </div>
 
+          {/* VIP 1-Click Admin Login Banner */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-50 via-purple-50/50 to-amber-50 border border-purple-200/90 shadow-2xs flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>Tài khoản Quản trị viên (Admin)</span>
+                  <span className="text-[10px] bg-purple-200/70 text-purple-900 px-1.5 py-0.2 rounded font-mono font-bold">
+                    admin
+                  </span>
+                </div>
+                <div className="text-[11px] text-purple-700 truncate">
+                  Ngô Thị Hồng Thu · Quản lý menu, duyệt đơn & ví
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => quickLoginDemoUser('user-admin-01')}
+              className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1"
+              title="Đăng nhập tài khoản Quản trị viên ngay"
+            >
+              <span>Vào Admin</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Quick-fill helper chips */}
+          <div className="space-y-1.5 pb-1">
+            <span className="text-[11px] font-semibold text-slate-500 block">
+              Gợi ý điền nhanh & đăng nhập 1 chạm:
+            </span>
+            <div className="flex flex-wrap gap-1.5 text-[11px]">
+              <button
+                type="button"
+                onClick={() => quickLoginDemoUser('user-admin-01')}
+                className="px-2.5 py-1 rounded-lg bg-purple-100 text-purple-900 hover:bg-purple-200 border border-purple-300 font-bold transition-colors cursor-pointer flex items-center gap-1"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-700" />
+                <span>Admin (1 chạm)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIdentifier('2374820028');
+                  setPassword('123456');
+                }}
+                className="px-2 py-1 rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 font-medium transition-colors cursor-pointer"
+              >
+                Sinh viên (2374820028)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIdentifier('2374820071');
+                  setPassword('123456');
+                }}
+                className="px-2 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-medium transition-colors cursor-pointer"
+              >
+                Bếp Căn tin (2374820071)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIdentifier('nam.th');
+                  setPassword('123456');
+                }}
+                className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-medium transition-colors cursor-pointer"
+              >
+                Giảng viên (nam.th)
+              </button>
+            </div>
+          </div>
+
           {/* 1. FORM NHẬP LIỆU Ở VỊ TRÍ CAO NHẤT (TEXTBOX TRÊN CÙNG) */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Input 1: Identifier */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-slate-700">
-                Mã sinh viên / Email / Số điện thoại <span className="text-rose-500">*</span>
+                Mã sinh viên / Email / Tên đăng nhập / SĐT <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -93,7 +169,7 @@ export const LoginPage: React.FC = () => {
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="VD: 2374820028 hoặc linhchi@eatnow.edu.vn"
+                  placeholder="VD: admin hoặc 2374820028 hoặc linhchi@eatnow.edu.vn"
                   className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all text-slate-900 placeholder:text-slate-400 font-medium"
                   required
                   autoFocus
@@ -273,10 +349,11 @@ export const LoginPage: React.FC = () => {
               {/* Quản trị viên */}
               <button
                 type="button"
-                onClick={() => quickLoginDemoUser('user-ad-01')}
-                className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:border-purple-400 bg-slate-50 hover:bg-purple-50/60 transition-all text-left group"
+                onClick={() => quickLoginDemoUser('user-admin-01')}
+                className="flex items-center gap-2.5 p-2.5 rounded-xl border border-purple-300 hover:border-purple-500 bg-purple-50/60 hover:bg-purple-100 transition-all text-left group shadow-2xs ring-1 ring-purple-200 cursor-pointer"
+                title="Đăng nhập tài khoản Quản trị viên ngay"
               >
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-purple-100 shrink-0 border border-slate-200">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-purple-100 shrink-0 border border-purple-300">
                   <img
                     src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80"
                     alt="Quản trị viên"
@@ -284,16 +361,19 @@ export const LoginPage: React.FC = () => {
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-between gap-1">
                     <span className="text-xs font-bold text-slate-900 truncate group-hover:text-purple-800">
                       Ngô Thị Hồng Thu
                     </span>
+                    <span className="text-[9.5px] bg-purple-600 text-white font-bold px-1.5 py-0.2 rounded-full">
+                      1 chạm
+                    </span>
                   </div>
                   <div className="flex items-center gap-1 text-[10px] text-slate-500">
-                    <span className="font-semibold text-purple-700 bg-purple-100/80 px-1 rounded">
+                    <span className="font-semibold text-purple-700 bg-purple-100 px-1 rounded">
                       Admin
                     </span>
-                    <span>· Quản trị</span>
+                    <span className="text-purple-900 font-medium">· Toàn quyền quản trị</span>
                   </div>
                 </div>
               </button>
