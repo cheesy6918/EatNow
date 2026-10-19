@@ -1,7 +1,7 @@
 # EATNOW – HỆ THỐNG ĐẶT MÓN ĂN CĂN TIN TRƯỜNG HỌC
 
 > **Đồ án môn học:** Phát triển ứng dụng Web / Công nghệ phần mềm  
-> **Repository:** [https://github.com/ngothihongthu212-hub/EatNow](https://github.com/ngothihongthu212-hub/EatNow)  
+> **Repository:** [https://github.com/cheesy6918/EatNow](https://github.com/cheesy6918/EatNow)  
 > **Công nghệ sử dụng chính:** `HTML` · `CSS` · `JS` · `MySQL` · `GitHub` · `NodeJS`  
 > **Mô hình phát triển:** Agile / Scrum (3 Sprints) · Quản lý tiến độ Trello · Phân loại MoSCoW (32 User Stories)
 
@@ -29,7 +29,7 @@ Hệ thống **EatNow** được xây dựng dựa trên đầy đủ **6 công 
 | 2 | **CSS** | **CSS3 / Tailwind CSS** | Định kiểu giao diện, hệ màu căn tin hiện đại, bố cục Flexbox/Grid và responsive 100% trên điện thoại di động & máy tính. |
 | 3 | **JS** | **JavaScript (ES6+) / ReactJS / TypeScript** | Xử lý logic nghiệp vụ đặt món, giỏ hàng realtime, tính toán giảm giá voucher, trừ tiền ví CanteenGo và phân quyền 3 vai trò. |
 | 4 | **MySQL** | **MySQL Database (InnoDB, utf8mb4)** | Thiết kế và quản lý 7 bảng cơ sở dữ liệu quan hệ (`NguoiDung`, `DanhMuc`, `MonAn`, `DonHang`, `ChiTietDonHang`, `ThanhToan`, `DanhGia`). |
-| 5 | **GitHub** | **Git / GitHub** | Quản lý mã nguồn tập trung, lịch sử commit theo từng Sprint của 5 thành viên (Repo: `ngothihongthu212-hub/EatNow`). |
+| 5 | **GitHub** | **Git / GitHub** | Quản lý mã nguồn tập trung, lịch sử commit theo từng Sprint của 5 thành viên (Repo: `cheesy6918/EatNow`). |
 | 6 | **NodeJS** | **Node.js (v18+ / v20+)** | Môi trường runtime thực thi JavaScript phía server, quản lý gói phụ thuộc npm, chạy máy chủ backend và Vite dev server. |
 
 ### Thư viện & Công cụ mở rộng tối ưu trải nghiệm:
@@ -213,7 +213,7 @@ Nhóm QA đã thiết kế và kiểm thử thành công bộ 15 kịch bản (T
 ### Các lệnh thực thi trong Terminal:
 ```bash
 # 1. Sao chép mã nguồn về máy
-git clone https://github.com/ngothihongthu212-hub/EatNow.git
+git clone https://github.com/cheesy6918/EatNow.git
 cd EatNow
 
 # 2. Cài đặt toàn bộ thư viện dependencies

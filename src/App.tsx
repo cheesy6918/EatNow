@@ -28,6 +28,8 @@ import {
   ChefHat,
   BarChart3,
   Lock,
+  GitBranch,
+  ExternalLink,
 } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
@@ -246,7 +248,19 @@ const MainLayout: React.FC = () => {
           <div>
             © {new Date().getFullYear()} EatNow Platform. Toàn quyền bảo lưu.
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <a
+              href="https://github.com/cheesy6918/EatNow"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-slate-600 hover:text-amber-600 font-medium transition-colors"
+              title="Kho mã nguồn dự án trên GitHub (cheesy6918/EatNow)"
+            >
+              <GitBranch className="w-3.5 h-3.5 text-slate-500" />
+              <span>GitHub: cheesy6918/EatNow</span>
+              <ExternalLink className="w-3 h-3 text-slate-400" />
+            </a>
+            <span>·</span>
             <span>Chính sách hoàn tiền Ví CanteenGo</span>
             <span>·</span>
             <span>Tiêu chuẩn an toàn thực phẩm</span>

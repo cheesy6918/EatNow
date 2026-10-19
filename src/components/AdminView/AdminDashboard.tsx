@@ -44,6 +44,8 @@ import {
   FileText,
   PlayCircle,
   RotateCcw,
+  GitBranch,
+  ExternalLink,
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -721,13 +723,27 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <button
-          onClick={handleOpenAdd}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95 whitespace-nowrap self-start md:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Thêm món ăn mới</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+          <a
+            href="https://github.com/cheesy6918/EatNow"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
+            title="Kho mã nguồn dự án trên GitHub (cheesy6918/EatNow)"
+          >
+            <GitBranch className="w-4 h-4 text-amber-400" />
+            <span>GitHub (cheesy6918/EatNow)</span>
+            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+          </a>
+
+          <button
+            onClick={handleOpenAdd}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95 whitespace-nowrap cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Thêm món ăn mới</span>
+          </button>
+        </div>
       </div>
 
       {/* Nav Tabs */}
