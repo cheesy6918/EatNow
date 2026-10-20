@@ -16,6 +16,7 @@ import {
   UtensilsCrossed,
   Package,
   Sparkles,
+  Banknote,
 } from 'lucide-react';
 import { WalletPaymentModal } from './WalletPaymentModal';
 
@@ -41,10 +42,13 @@ export const CartDrawer: React.FC = () => {
     tableNumber,
     setTableNumber,
     openAuthModal,
+    createOrder,
   } = useApp();
 
   const [selectedSlot, setSelectedSlot] = useState(pickupSlots[2] || '11:15 - 11:30');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'cod'>('wallet');
+  const [isSubmittingCod, setIsSubmittingCod] = useState(false);
   const [voucherInput, setVoucherInput] = useState('');
   const [showVoucherList, setShowVoucherList] = useState(false);
 
@@ -225,24 +229,6 @@ export const CartDrawer: React.FC = () => {
                       <span>Ăn tại căn tin</span>
                     </button>
                   </div>
-
-                  {diningOption === 'dine_in' && (
-                    <div className="pt-1.5">
-                      <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                        Chọn vị trí ngồi / Quầy nhận món:
-                      </label>
-                      <select
-                        value={tableNumber}
-                        onChange={(e) => setTableNumber(e.target.value)}
-                        className="w-full text-xs p-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-medium"
-                      >
-                        <option value="Quầy A1 - Bàn 01-05 (Tầng 1)">Quầy A1 - Bàn 01-05 (Tầng 1)</option>
-                        <option value="Quầy A2 - Bàn 06-12 (Tầng 1)">Quầy A2 - Bàn 06-12 (Tầng 1)</option>
-                        <option value="Khu B2 - Bàn Tròn Sinh Viên">Khu B2 - Bàn Tròn Sinh Viên</option>
-                        <option value="Tầng 2 - Khu Vườn Sân Thượng">Tầng 2 - Khu Vườn Sân Thượng</option>
-                      </select>
-                    </div>
-                  )}
                 </div>
 
                 {/* Pickup Time Slot (US15) */}
@@ -370,7 +356,7 @@ export const CartDrawer: React.FC = () => {
                       <span>Thông tin nhận món:</span>
                     </div>
                     <div className="text-slate-700">
-                      <strong>{currentUser.name}</strong>{currentUser.mssv ? ` (Mã: ${currentUser.mssv})` : ''} · {currentUser.phone}
+                      <strong>{currentUser.name}</strong> · {currentUser.phone}
                       {currentUser.className && ` · ${currentUser.className}`}
                     </div>
                   </div>
@@ -385,7 +371,7 @@ export const CartDrawer: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => openAuthModal('login')}
-                      className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0"
+                      className="px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shrink-0 cursor-pointer"
                     >
                       Đăng nhập
                     </button>
@@ -398,8 +384,72 @@ export const CartDrawer: React.FC = () => {
           {/* Footer Checkout */}
           {cart.length > 0 && (
             <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-200 space-y-3">
+              {/* Payment Method Selection */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                  Phương thức thanh toán:
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('wallet')}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      paymentMethod === 'wallet'
+                        ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-500/20 shadow-2xs'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Wallet
+                        className={`w-3.5 h-3.5 ${
+                          paymentMethod === 'wallet' ? 'text-orange-600' : 'text-slate-400'
+                        }`}
+                      />
+                      <span
+                        className={`text-xs font-bold ${
+                          paymentMethod === 'wallet' ? 'text-orange-950' : 'text-slate-800'
+                        }`}
+                      >
+                        Thanh toán qua ví
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 mt-1">
+                      Mặc định · Ví CanteenGo
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('cod')}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      paymentMethod === 'cod'
+                        ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-500/20 shadow-2xs'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Banknote
+                        className={`w-3.5 h-3.5 ${
+                          paymentMethod === 'cod' ? 'text-orange-600' : 'text-slate-400'
+                        }`}
+                      />
+                      <span
+                        className={`text-xs font-bold ${
+                          paymentMethod === 'cod' ? 'text-orange-950' : 'text-slate-800'
+                        }`}
+                      >
+                        Khi nhận đơn (COD)
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 mt-1">
+                      Tiền mặt tại quầy căn tin
+                    </span>
+                  </button>
+                </div>
+              </div>
+
               {/* Summary */}
-              <div className="space-y-1 text-xs text-slate-600">
+              <div className="space-y-1 text-xs text-slate-600 pt-1 border-t border-slate-200">
                 <div className="flex justify-between">
                   <span>Tạm tính ({cart.reduce((s, i) => s + i.quantity, 0)} phần):</span>
                   <span className="font-mono-nums font-semibold text-slate-900">
@@ -420,9 +470,9 @@ export const CartDrawer: React.FC = () => {
                     Miễn phí
                   </span>
                 </div>
-                <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
+                <div className="flex justify-between text-sm font-bold text-slate-900 pt-1.5 border-t border-slate-200">
                   <span>Tổng tiền thanh toán:</span>
-                  <span className="text-base font-extrabold font-mono-nums text-amber-600">
+                  <span className="text-base font-extrabold font-mono-nums text-orange-600">
                     {finalCartTotal.toLocaleString('vi-VN')}₫
                   </span>
                 </div>
@@ -430,17 +480,38 @@ export const CartDrawer: React.FC = () => {
 
               {/* Checkout Button */}
               {currentUser ? (
-                <button
-                  onClick={() => setIsPaymentModalOpen(true)}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md active:scale-98 transition-all"
-                >
-                  <span>Xác nhận & Thanh toán Ví</span>
-                  <ArrowRight className="w-4 h-4 text-amber-400" />
-                </button>
+                paymentMethod === 'wallet' ? (
+                  <button
+                    onClick={() => setIsPaymentModalOpen(true)}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-md active:scale-98 transition-all cursor-pointer"
+                  >
+                    <span>Xác nhận & Thanh toán Ví</span>
+                    <ArrowRight className="w-4 h-4 text-white" />
+                  </button>
+                ) : (
+                  <button
+                    disabled={isSubmittingCod}
+                    onClick={async () => {
+                      setIsSubmittingCod(true);
+                      await createOrder(selectedSlot, 'cod');
+                      setIsSubmittingCod(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-md active:scale-98 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmittingCod ? (
+                      <span>Đang tạo đơn...</span>
+                    ) : (
+                      <>
+                        <span>Đặt món & Thanh toán khi nhận đơn (COD)</span>
+                        <ArrowRight className="w-4 h-4 text-white" />
+                      </>
+                    )}
+                  </button>
+                )
               ) : (
                 <button
                   onClick={() => openAuthModal('login')}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-sm shadow-md active:scale-98 transition-all"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-md active:scale-98 transition-all cursor-pointer"
                 >
                   <span>Đăng nhập để đặt món</span>
                   <ArrowRight className="w-4 h-4" />

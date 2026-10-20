@@ -286,7 +286,7 @@ export const AdminDashboard: React.FC = () => {
             Quản lý toàn bộ danh mục thực đơn, số lượng tồn kho đầu ngày, giám sát doanh thu và phản hồi từ sinh viên.
           </p>
           <div className="mt-2 text-xs text-amber-300 font-medium">
-            Quản trị viên phụ trách: <strong>Ngô Thị Hồng Thu (MSSV: 2374820182)</strong> · Bộ phận: <strong>Ban Quản Trị Hệ Thống Căn Tin EatNow</strong>
+            Quản trị viên phụ trách: <strong>Ngô Thị Hồng Thu</strong> · Bộ phận: <strong>Ban Quản Trị Hệ Thống Căn Tin EatNow</strong>
           </div>
         </div>
 
@@ -741,7 +741,7 @@ export const AdminDashboard: React.FC = () => {
               Danh sách tài khoản & Phân quyền hệ thống
             </h3>
             <p className="text-xs text-slate-500">
-              Phân quyền theo 3 vai trò: Sinh viên, Nhân viên căn tin và Quản trị viên
+              Phân quyền theo 3 vai trò: Sinh viên, Nhân viên và Quản trị viên
             </p>
           </div>
 
@@ -749,8 +749,7 @@ export const AdminDashboard: React.FC = () => {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
                 <tr>
-                  <th className="p-3.5">Họ và tên & MSSV</th>
-                  <th className="p-3.5">Lớp / Bộ phận</th>
+                  <th className="p-3.5">Họ và tên</th>
                   <th className="p-3.5">Email</th>
                   <th className="p-3.5">Số điện thoại</th>
                   <th className="p-3.5">Vai trò</th>
@@ -760,17 +759,9 @@ export const AdminDashboard: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-50/60">
+                  <tr key={u.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="p-3.5">
                       <div className="font-bold text-slate-900">{u.name}</div>
-                      {u.mssv && (
-                        <div className="text-[11px] text-amber-700 font-mono font-semibold">
-                          MSSV: {u.mssv}
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-3.5 text-slate-700 font-medium">
-                      {u.department || u.className || '—'}
                     </td>
                     <td className="p-3.5 text-slate-600 font-mono text-[11px]">{u.email}</td>
                     <td className="p-3.5 text-slate-600 font-mono-nums">{u.phone}</td>
@@ -787,7 +778,7 @@ export const AdminDashboard: React.FC = () => {
                         {u.role === 'customer'
                           ? 'Sinh viên'
                           : u.role === 'staff'
-                          ? 'Nhân viên Căn tin'
+                          ? 'Nhân viên'
                           : 'Quản trị viên'}
                       </span>
                     </td>
@@ -797,7 +788,7 @@ export const AdminDashboard: React.FC = () => {
                     <td className="p-3.5 text-right">
                       <button
                         onClick={() => switchUser(u.id)}
-                        className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] transition-colors shadow-2xs whitespace-nowrap"
+                        className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] transition-colors shadow-2xs whitespace-nowrap cursor-pointer"
                         title="Đăng nhập và chuyển giao diện sang tài khoản này"
                       >
                         Chuyển ngay

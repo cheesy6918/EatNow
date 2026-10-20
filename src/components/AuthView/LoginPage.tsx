@@ -125,7 +125,7 @@ export const LoginPage: React.FC = () => {
             <div
               onClick={() => fillTestAccount('nhanvien@canteen.vn', '123456')}
               className="hover:text-orange-600 hover:bg-orange-50/60 p-1 rounded-md transition-colors cursor-pointer select-none"
-              title="Nhấp để điền nhanh tài khoản Nhân viên bếp"
+              title="Nhấp để điền nhanh tài khoản Nhân viên"
             >
               <span className="font-semibold text-slate-800">Nhân viên:</span> nhanvien@canteen.vn / 123456
             </div>

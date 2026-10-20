@@ -1143,7 +1143,7 @@ export const INITIAL_ORDERS: Order[] = [
     userId: 'user-sv-01',
     userName: 'Nguyễn Linh Chi',
     userPhone: '0912 345 678',
-    userClass: 'K21-CNTT01 (2374820028)',
+    userClass: 'K21-CNTT01',
     items: [
       {
         foodId: 'food-01',
@@ -1175,7 +1175,7 @@ export const INITIAL_ORDERS: Order[] = [
     userId: 'user-sv-02',
     userName: 'Mai Thu Hà',
     userPhone: '0934 567 890',
-    userClass: 'K21-CNTT01 (2374820052)',
+    userClass: 'K21-CNTT01',
     items: [
       {
         foodId: 'food-02',
@@ -1199,7 +1199,7 @@ export const INITIAL_ORDERS: Order[] = [
     userId: 'user-sv-03',
     userName: 'Nguyễn Thị Huyền',
     userPhone: '0978 123 456',
-    userClass: 'K21-CNTT02 (2374820092)',
+    userClass: 'K21-CNTT02',
     items: [
       {
         foodId: 'food-11',

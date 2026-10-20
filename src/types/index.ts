@@ -103,8 +103,8 @@ export interface Order {
   cancelReason?: string;
   createdAt: string;
   completedAt?: string;
-  paymentMethod: 'wallet';
-  paymentStatus: 'paid' | 'refunded';
+  paymentMethod: 'wallet' | 'cod';
+  paymentStatus: 'paid' | 'unpaid' | 'refunded';
   rating?: number;
   reviewComment?: string;
 }
