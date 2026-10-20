@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { FoodItem, Category, Voucher, Order, OrderStatus, Role } from '../../types';
+import { FoodItem, Category, Voucher } from '../../types';
 import { generateMySQLScript } from '../../utils/mysqlExport';
 import {
   BarChart3,
@@ -26,26 +26,6 @@ import {
   Code,
   Table,
   Check,
-  ShoppingBag,
-  Layers,
-  Wallet,
-  KeyRound,
-  Clock,
-  Shield,
-  ChefHat,
-  Filter,
-  CheckCircle,
-  XCircle,
-  ArrowUpRight,
-  RefreshCw,
-  Sliders,
-  Settings,
-  Megaphone,
-  FileText,
-  PlayCircle,
-  RotateCcw,
-  GitBranch,
-  ExternalLink,
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -58,73 +38,18 @@ export const AdminDashboard: React.FC = () => {
     transactions,
     vouchers,
     switchUser,
-    createOrder,
     adminAddFood,
     adminUpdateFood,
     adminDeleteFood,
     adminToggleFoodAvailability,
     adminAddVoucher,
     adminDeleteVoucher,
-    adminAddCategory,
-    adminUpdateCategory,
-    adminDeleteCategory,
-    adminAdjustUserWallet,
-    adminUpdateUserRole,
-    adminResetUserPassword,
-    updateOrderStatus,
-    cancelOrder,
     showToast,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<
-    'overview' | 'orders' | 'menu' | 'categories' | 'users' | 'vouchers' | 'reviews' | 'database' | 'settings'
-  >('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'menu' | 'reviews' | 'users' | 'vouchers' | 'database'>('overview');
   const [foodSearch, setFoodSearch] = useState('');
   const [foodCategoryFilter, setFoodCategoryFilter] = useState('all');
-
-  // Operations & Settings States
-  const [announcementInput, setAnnouncementInput] = useState<string>(() => {
-    return (
-      localStorage.getItem('eatnow_announcement') ||
-      '🎉 Chào mừng đến với Căn tin EatNow! Đặt trước nhận ngay — Giảm 10% cho đơn hàng đầu tiên qua Ví CanteenGo | Thực đơn trưa phục vụ từ 10:30 đến 13:30 mỗi ngày | Chúc bạn một bữa ăn ngon miệng! 🍱🥤'
-    );
-  });
-  const [isCanteenOpen, setIsCanteenOpen] = useState<boolean>(() => {
-    return localStorage.getItem('eatnow_canteen_open') !== 'false';
-  });
-  const [maxOrdersPerSlot, setMaxOrdersPerSlot] = useState<number>(() => {
-    return Number(localStorage.getItem('eatnow_max_slot')) || 45;
-  });
-  const [canteenHours, setCanteenHours] = useState({ open: '06:30', close: '18:30' });
-
-  // Orders Management States
-  const [orderSearch, setOrderSearch] = useState('');
-  const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
-  const [selectedOrderForAdmin, setSelectedOrderForAdmin] = useState<Order | null>(null);
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
-  const [cancelReasonInput, setCancelReasonInput] = useState('');
-
-  // Categories Management States
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [categoryForm, setCategoryForm] = useState({
-    name: '',
-    slug: '',
-    icon: 'Utensils',
-    description: '',
-  });
-
-  // Users & Wallet Management States
-  const [userSearch, setUserSearch] = useState('');
-  const [userRoleFilter, setUserRoleFilter] = useState<string>('all');
-  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  const [targetUserForWallet, setTargetUserForWallet] = useState<{ id: string; name: string; balance: number } | null>(null);
-  const [walletAmountInput, setWalletAmountInput] = useState<number>(50000);
-  const [walletNoteInput, setWalletNoteInput] = useState('');
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-  const [targetUserForRole, setTargetUserForRole] = useState<{ id: string; name: string; role: Role } | null>(null);
-  const [selectedRoleInput, setSelectedRoleInput] = useState<Role>('customer');
 
   // Database Tab States
   const [selectedTable, setSelectedTable] = useState<'users' | 'categories' | 'foods' | 'vouchers' | 'orders' | 'wallet_transactions' | 'reviews'>('foods');
@@ -345,364 +270,6 @@ export const AdminDashboard: React.FC = () => {
     return true;
   });
 
-  // Filter orders in admin table
-  const filteredOrders = orders.filter((o) => {
-    const matchStatus = orderStatusFilter === 'all' || o.status === orderStatusFilter;
-    const term = orderSearch.trim().toLowerCase();
-    const matchSearch =
-      !term ||
-      o.orderCode.toLowerCase().includes(term) ||
-      o.userName.toLowerCase().includes(term) ||
-      o.userPhone.includes(term) ||
-      (o.userClass && o.userClass.toLowerCase().includes(term)) ||
-      o.items.some((it) => it.name.toLowerCase().includes(term));
-    return matchStatus && matchSearch;
-  });
-
-  // Filter users in admin table
-  const filteredUsers = users.filter((u) => {
-    const matchRole = userRoleFilter === 'all' || u.role === userRoleFilter;
-    const term = userSearch.trim().toLowerCase();
-    const matchSearch =
-      !term ||
-      u.name.toLowerCase().includes(term) ||
-      u.email.toLowerCase().includes(term) ||
-      u.phone.includes(term) ||
-      (u.mssv && u.mssv.toLowerCase().includes(term)) ||
-      (u.className && u.className.toLowerCase().includes(term)) ||
-      (u.department && u.department.toLowerCase().includes(term));
-    return matchRole && matchSearch;
-  });
-
-  // Category Form Handlers
-  const handleOpenAddCategory = () => {
-    setEditingCategory(null);
-    setCategoryForm({
-      name: '',
-      slug: '',
-      icon: 'Utensils',
-      description: '',
-    });
-    setIsCategoryModalOpen(true);
-  };
-
-  const handleOpenEditCategory = (cat: Category) => {
-    setEditingCategory(cat);
-    setCategoryForm({
-      name: cat.name,
-      slug: cat.slug,
-      icon: cat.icon || 'Utensils',
-      description: cat.description || '',
-    });
-    setIsCategoryModalOpen(true);
-  };
-
-  const handleSaveCategory = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!categoryForm.name.trim()) {
-      showToast('Vui lòng nhập tên danh mục!', 'error');
-      return;
-    }
-    const slug = categoryForm.slug.trim() || categoryForm.name.toLowerCase().replace(/\s+/g, '-');
-    if (editingCategory) {
-      adminUpdateCategory(editingCategory.id, {
-        name: categoryForm.name.trim(),
-        slug,
-        icon: categoryForm.icon,
-        description: categoryForm.description.trim(),
-      });
-    } else {
-      adminAddCategory({
-        name: categoryForm.name.trim(),
-        slug,
-        icon: categoryForm.icon,
-        description: categoryForm.description.trim(),
-      });
-    }
-    setIsCategoryModalOpen(false);
-  };
-
-  // Order Cancel & Refund Handler
-  const handleConfirmCancelOrder = () => {
-    if (!orderToCancel) return;
-    const reason = cancelReasonInput.trim() || 'Admin căn tin hủy đơn & hoàn tiền vào Ví CanteenGo';
-    cancelOrder(orderToCancel.id, reason);
-    setIsCancelModalOpen(false);
-    setOrderToCancel(null);
-    setCancelReasonInput('');
-  };
-
-  // Wallet Adjustment Handler
-  const handleSaveWalletAdjustment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!targetUserForWallet) return;
-    if (walletAmountInput <= 0) {
-      showToast('Số tiền điều chỉnh phải lớn hơn 0!', 'error');
-      return;
-    }
-    adminAdjustUserWallet(
-      targetUserForWallet.id,
-      walletAmountInput,
-      walletNoteInput || 'Admin nạp ví trực tiếp'
-    );
-    setIsWalletModalOpen(false);
-    setTargetUserForWallet(null);
-    setWalletNoteInput('');
-  };
-
-  // Role Change Handler
-  const handleSaveRoleChange = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!targetUserForRole) return;
-    adminUpdateUserRole(targetUserForRole.id, selectedRoleInput);
-    setIsRoleModalOpen(false);
-    setTargetUserForRole(null);
-  };
-
-  // Operations: Save Marquee Announcement
-  const handleSaveAnnouncement = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!announcementInput.trim()) {
-      showToast('Nội dung thông báo không được để trống!', 'error');
-      return;
-    }
-    localStorage.setItem('eatnow_announcement', announcementInput.trim());
-    window.dispatchEvent(new Event('eatnow_announcement_updated'));
-    showToast('Đã cập nhật thông báo toàn hệ thống thành công!', 'success');
-  };
-
-  // Operations: Toggle Canteen Status
-  const handleToggleCanteenOpen = () => {
-    const nextState = !isCanteenOpen;
-    setIsCanteenOpen(nextState);
-    localStorage.setItem('eatnow_canteen_open', String(nextState));
-    showToast(
-      nextState
-        ? 'Căn tin đã MỞ CỬA nhận đơn bình thường!'
-        : 'Căn tin đã TẠM DỪNG nhận đơn (Thông báo bếp quá tải)',
-      nextState ? 'success' : 'info'
-    );
-  };
-
-  // Operations: Save Capacity
-  const handleSaveCapacity = () => {
-    localStorage.setItem('eatnow_max_slot', String(maxOrdersPerSlot));
-    showToast(`Đã lưu công suất bếp: tối đa ${maxOrdersPerSlot} suất / 15 phút`, 'success');
-  };
-
-  // Export: Orders to CSV / Excel
-  const exportOrdersToCSV = () => {
-    try {
-      const headers = [
-        'Mã Đơn Hàng',
-        'Khách Hàng',
-        'Mã SV / ID',
-        'Số Điện Thoại',
-        'Danh Sách Món',
-        'Khung Giờ Hẹn Lấy',
-        'Hình Thức Ăn',
-        'Vị Trí / Bàn',
-        'Voucher',
-        'Tổng Tiền (VNĐ)',
-        'Trạng Thái Đơn',
-        'Thời Gian Đặt',
-      ];
-
-      const rows = orders.map((o) => [
-        o.orderCode,
-        `"${o.userName.replace(/"/g, '""')}"`,
-        o.userId,
-        o.userPhone,
-        `"${o.items.map((i) => `${i.name} (SL: ${i.quantity})`).join('; ')}"`,
-        o.pickupTimeSlot,
-        o.diningOption === 'dine_in' ? 'Ăn tại chỗ' : 'Mang về',
-        o.tableNumber || 'N/A',
-        o.voucherCode || 'Không có',
-        o.totalAmount,
-        o.status,
-        `"${new Date(o.createdAt).toLocaleString('vi-VN')}"`,
-      ]);
-
-      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `EatNow_BaoCao_DonHang_${new Date().toISOString().slice(0, 10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showToast('Đã xuất file Excel/CSV Đơn hàng thành công!', 'success');
-    } catch {
-      showToast('Không thể xuất file CSV!', 'error');
-    }
-  };
-
-  // Export: Users & Wallet Balances to CSV
-  const exportUsersToCSV = () => {
-    try {
-      const headers = [
-        'Mã Người Dùng',
-        'Họ Và Tên',
-        'MSSV / Mã Cán Bộ',
-        'Email',
-        'Số Điện Thoại',
-        'Vai Trò',
-        'Số Dư Ví CanteenGo (VNĐ)',
-        'Lớp / Khoa',
-      ];
-
-      const rows = users.map((u) => [
-        u.id,
-        `"${u.name.replace(/"/g, '""')}"`,
-        u.mssv || 'N/A',
-        u.email,
-        u.phone,
-        u.role,
-        u.walletBalance,
-        `"${(u.department || u.className || '').replace(/"/g, '""')}"`,
-      ]);
-
-      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `EatNow_BaoCao_NguoiDung_Vi_${new Date().toISOString().slice(0, 10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showToast('Đã xuất file Excel/CSV Tài khoản & Ví thành công!', 'success');
-    } catch {
-      showToast('Không thể xuất file CSV người dùng!', 'error');
-    }
-  };
-
-  // Operations: Create Instant Mock Order for testing Kitchen & Admin
-  const handleCreateMockOrder = () => {
-    const student = users.find((u) => u.role === 'customer') || users[0];
-    const availableFoods = foods.filter((f) => f.isAvailable && f.stockQuantity > 0);
-    const selectedDish = availableFoods[Math.floor(Math.random() * availableFoods.length)] || foods[0];
-    const drinks = foods.filter((f) => f.categoryId === 'do-uong') || [];
-    const selectedDrink = drinks[0] || foods[1];
-
-    const orderNumber = Math.floor(1000 + Math.random() * 9000);
-    const mockOrder: Order = {
-      id: `ord-mock-${Date.now()}`,
-      orderCode: `EN-${orderNumber}`,
-      userId: student.id,
-      userName: student.name,
-      userPhone: student.phone,
-      userClass: student.className || 'K21-CNTT01',
-      items: [
-        {
-          foodId: selectedDish.id,
-          name: selectedDish.name,
-          price: selectedDish.price,
-          quantity: 1,
-          image: selectedDish.image,
-          note: 'Làm nóng giúp em, ít cay',
-        },
-        {
-          foodId: selectedDrink.id,
-          name: selectedDrink.name,
-          price: selectedDrink.price,
-          quantity: 1,
-          image: selectedDrink.image,
-          note: 'Ít đá, 50% đường',
-        },
-      ],
-      totalAmount: selectedDish.price + selectedDrink.price,
-      discountAmount: 0,
-      paymentMethod: 'wallet',
-      paymentStatus: 'paid',
-      status: 'paid_pending_confirm',
-      pickupTimeSlot: '11:45 - 12:00',
-      diningOption: 'takeaway',
-      createdAt: new Date().toISOString(),
-    };
-
-    // Add to orders in state via localStorage & context
-    const currentOrders = JSON.parse(localStorage.getItem('eatnow_orders') || '[]');
-    const nextOrders = [mockOrder, ...currentOrders];
-    localStorage.setItem('eatnow_orders', JSON.stringify(nextOrders));
-    window.location.reload();
-  };
-
-  // Operations: Top up +100k to all demo accounts
-  const handleTopupAllWallets = () => {
-    users.forEach((u) => {
-      adminAdjustUserWallet(u.id, 100000, 'Admin tặng 100k hỗ trợ ăn trưa sinh viên');
-    });
-    showToast('Đã nạp thành công 100.000₫ vào ví của toàn bộ người dùng!', 'success');
-  };
-
-  // Operations: Reset demo database
-  const handleResetDemoData = () => {
-    if (window.confirm('Bạn có chắc chắn muốn đặt lại toàn bộ dữ liệu mẫu về mặc định?')) {
-      localStorage.removeItem('eatnow_foods_v7');
-      localStorage.removeItem('eatnow_categories_v2');
-      localStorage.removeItem('eatnow_orders');
-      localStorage.removeItem('eatnow_users_v6');
-      localStorage.removeItem('eatnow_vouchers');
-      localStorage.removeItem('eatnow_reviews_v6');
-      localStorage.removeItem('eatnow_transactions');
-      localStorage.removeItem('eatnow_announcement');
-      localStorage.removeItem('eatnow_canteen_open');
-      showToast('Đang khôi phục dữ liệu gốc...', 'info');
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    }
-  };
-
-  const getOrderStatusBadge = (status: OrderStatus) => {
-    switch (status) {
-      case 'pending_payment':
-        return {
-          label: 'Chờ thanh toán',
-          bg: 'bg-amber-50 text-amber-800 border-amber-200',
-          dot: 'bg-amber-400',
-        };
-      case 'paid_pending_confirm':
-        return {
-          label: 'Chờ xác nhận',
-          bg: 'bg-blue-50 text-blue-800 border-blue-200',
-          dot: 'bg-blue-500 animate-pulse',
-        };
-      case 'preparing':
-        return {
-          label: 'Đang nấu',
-          bg: 'bg-amber-100 text-amber-900 border-amber-300',
-          dot: 'bg-amber-500',
-        };
-      case 'ready':
-        return {
-          label: 'Sẵn sàng lấy',
-          bg: 'bg-emerald-50 text-emerald-800 border-emerald-300',
-          dot: 'bg-emerald-500',
-        };
-      case 'completed':
-        return {
-          label: 'Đã hoàn tất',
-          bg: 'bg-slate-100 text-slate-700 border-slate-200',
-          dot: 'bg-slate-400',
-        };
-      case 'cancelled':
-        return {
-          label: 'Đã hủy & hoàn ví',
-          bg: 'bg-rose-50 text-rose-800 border-rose-200',
-          dot: 'bg-rose-500',
-        };
-      default:
-        return {
-          label: status,
-          bg: 'bg-slate-50 text-slate-700 border-slate-200',
-          dot: 'bg-slate-400',
-        };
-    }
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Top Header */}
@@ -723,137 +290,78 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-          <a
-            href="https://github.com/cheesy6918/EatNow"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
-            title="Kho mã nguồn dự án trên GitHub (cheesy6918/EatNow)"
-          >
-            <GitBranch className="w-4 h-4 text-amber-400" />
-            <span>GitHub (cheesy6918/EatNow)</span>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-          </a>
-
-          <button
-            onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95 whitespace-nowrap cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Thêm món ăn mới</span>
-          </button>
-        </div>
+        <button
+          onClick={handleOpenAdd}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95 whitespace-nowrap self-start md:self-auto"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Thêm món ăn mới</span>
+        </button>
       </div>
 
       {/* Nav Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap ${
             activeTab === 'overview'
-              ? 'bg-slate-900 text-white shadow-xs'
+              ? 'bg-slate-900 text-white shadow-sm'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
-          <BarChart3 className="w-4 h-4" />
-          <span>Báo cáo & Tổng quan</span>
+          Báo cáo & Thống kê
         </button>
-
-        <button
-          onClick={() => setActiveTab('orders')}
-          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-            activeTab === 'orders'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <ShoppingBag className="w-4 h-4 text-amber-400" />
-          <span>Quản lý đơn hàng ({orders.length})</span>
-        </button>
-
         <button
           onClick={() => setActiveTab('menu')}
-          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap ${
             activeTab === 'menu'
-              ? 'bg-slate-900 text-white shadow-xs'
+              ? 'bg-slate-900 text-white shadow-sm'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
-          <Utensils className="w-4 h-4 text-amber-500" />
-          <span>Quản lý thực đơn ({foods.length})</span>
+          Quản lý thực đơn ({foods.length})
         </button>
-
-        <button
-          onClick={() => setActiveTab('categories')}
-          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-            activeTab === 'categories'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Layers className="w-4 h-4 text-blue-500" />
-          <span>Danh mục ({categories.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('users')}
-          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-            activeTab === 'users'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Users className="w-4 h-4 text-emerald-500" />
-          <span>Tài khoản & Ví ({users.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('vouchers')}
-          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-            activeTab === 'vouchers'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Tag className="w-4 h-4 text-rose-500" />
-          <span>Mã giảm giá ({vouchers.length})</span>
-        </button>
-
         <button
           onClick={() => setActiveTab('reviews')}
-          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap ${
             activeTab === 'reviews'
-              ? 'bg-slate-900 text-white shadow-xs'
+              ? 'bg-slate-900 text-white shadow-sm'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
-          <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-          <span>Đánh giá ({reviews.length})</span>
+          Đánh giá sinh viên ({reviews.length})
         </button>
-
+        <button
+          onClick={() => setActiveTab('users')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap ${
+            activeTab === 'users'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Tài khoản hệ thống ({users.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('vouchers')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+            activeTab === 'vouchers'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Tag className="w-3.5 h-3.5 text-amber-500" />
+          <span>Mã giảm giá ({vouchers.length})</span>
+        </button>
         <button
           onClick={() => setActiveTab('database')}
-          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === 'database'
-              ? 'bg-amber-500 text-slate-950 shadow-xs font-extrabold'
-              : 'text-slate-700 hover:bg-slate-100 bg-amber-50/70 border border-amber-200'
+              ? 'bg-amber-500 text-slate-950 shadow-sm font-extrabold'
+              : 'text-slate-700 hover:bg-slate-100 bg-amber-50/60 border border-amber-200/80'
           }`}
         >
-          <Database className="w-4 h-4 text-amber-700" />
+          <Database className="w-3.5 h-3.5 text-amber-700" />
           <span>CSDL MySQL & Xuất .SQL</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('settings')}
-          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-            activeTab === 'settings'
-              ? 'bg-orange-600 text-white shadow-xs font-extrabold'
-              : 'text-orange-800 hover:bg-orange-100/70 bg-orange-50 border border-orange-200 font-bold'
-          }`}
-        >
-          <Sliders className="w-4 h-4 text-orange-600" />
-          <span>Vận hành & Cài đặt</span>
         </button>
       </div>
 
@@ -1040,314 +548,6 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Tab: Orders Management (Admin Master Order Control) */}
-      {activeTab === 'orders' && (
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-6 animate-in fade-in duration-200">
-          {/* Header & Stats */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-                  <ShoppingBag className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">
-                  Quản lý đơn hàng căn tin thời gian thực
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Theo dõi toàn bộ đơn đặt trước của sinh viên & giảng viên, duyệt đơn, bàn giao và hỗ trợ hủy hoàn tiền tự động vào ví CanteenGo.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs">
-              <span className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-200 font-bold">
-                {orders.length} tổng số đơn
-              </span>
-              <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">
-                {orders.filter((o) => o.status === 'completed').length} hoàn tất
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200">
-              <span className="text-slate-500 block text-[11px]">Chờ bếp nhận & nấu</span>
-              <span className="text-lg font-bold font-mono-nums text-blue-700">
-                {orders.filter((o) => o.status === 'paid_pending_confirm' || o.status === 'preparing').length} đơn
-              </span>
-            </div>
-            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200">
-              <span className="text-slate-500 block text-[11px]">Đã sẵn sàng tại quầy</span>
-              <span className="text-lg font-bold font-mono-nums text-emerald-700">
-                {orders.filter((o) => o.status === 'ready').length} đơn
-              </span>
-            </div>
-            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200">
-              <span className="text-slate-500 block text-[11px]">Doanh thu đã thu về</span>
-              <span className="text-lg font-bold font-mono-nums text-slate-900">
-                {orders
-                  .filter((o) => o.status === 'completed')
-                  .reduce((sum, o) => sum + o.totalAmount, 0)
-                  .toLocaleString('vi-VN')}₫
-              </span>
-            </div>
-            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200">
-              <span className="text-slate-500 block text-[11px]">Đã hủy hoàn ví 100%</span>
-              <span className="text-lg font-bold font-mono-nums text-rose-600">
-                {orders.filter((o) => o.status === 'cancelled').length} đơn
-              </span>
-            </div>
-          </div>
-
-          {/* Search and Status Filter */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2">
-            {/* Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
-              {[
-                { id: 'all', label: 'Tất cả', count: orders.length },
-                {
-                  id: 'paid_pending_confirm',
-                  label: 'Chờ xác nhận',
-                  count: orders.filter((o) => o.status === 'paid_pending_confirm').length,
-                },
-                {
-                  id: 'preparing',
-                  label: 'Đang nấu',
-                  count: orders.filter((o) => o.status === 'preparing').length,
-                },
-                {
-                  id: 'ready',
-                  label: 'Sẵn sàng',
-                  count: orders.filter((o) => o.status === 'ready').length,
-                },
-                {
-                  id: 'completed',
-                  label: 'Hoàn tất',
-                  count: orders.filter((o) => o.status === 'completed').length,
-                },
-                {
-                  id: 'cancelled',
-                  label: 'Đã hủy',
-                  count: orders.filter((o) => o.status === 'cancelled').length,
-                },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setOrderStatusFilter(tab.id)}
-                  className={`px-3 py-1.5 rounded-xl font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 border ${
-                    orderStatusFilter === tab.id
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-100 border-slate-200'
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  <span
-                    className={`px-1.5 py-0.2 rounded-md text-[10px] font-bold ${
-                      orderStatusFilter === tab.id
-                        ? 'bg-slate-800 text-amber-400'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Search Input */}
-            <div className="relative min-w-[240px]">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={orderSearch}
-                onChange={(e) => setOrderSearch(e.target.value)}
-                placeholder="Tìm mã đơn, tên SV, SĐT..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500/30 text-slate-900 placeholder:text-slate-400"
-              />
-            </div>
-          </div>
-
-          {/* Orders Table */}
-          <div className="overflow-x-auto rounded-2xl border border-slate-200">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
-                <tr>
-                  <th className="p-3.5">Mã đơn & Giờ đặt</th>
-                  <th className="p-3.5">Khách hàng</th>
-                  <th className="p-3.5">Khung giờ nhận</th>
-                  <th className="p-3.5">Món ăn đã đặt</th>
-                  <th className="p-3.5 font-mono-nums">Tổng tiền</th>
-                  <th className="p-3.5">Trạng thái</th>
-                  <th className="p-3.5 text-right">Thao tác Admin</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredOrders.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400">
-                      Không tìm thấy đơn hàng nào phù hợp với bộ lọc hiện tại.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredOrders.map((ord) => {
-                    const badge = getOrderStatusBadge(ord.status);
-                    return (
-                      <tr key={ord.id} className="hover:bg-slate-50/70 transition-colors">
-                        {/* Order Code & Date */}
-                        <td className="p-3.5">
-                          <button
-                            onClick={() => setSelectedOrderForAdmin(ord)}
-                            className="font-bold font-mono text-amber-700 hover:text-amber-800 hover:underline cursor-pointer flex items-center gap-1"
-                          >
-                            <span>#{ord.orderCode}</span>
-                            <ArrowUpRight className="w-3 h-3" />
-                          </button>
-                          <div className="text-[10px] text-slate-400 mt-0.5">
-                            {new Date(ord.createdAt).toLocaleTimeString('vi-VN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}{' '}
-                            · {new Date(ord.createdAt).toLocaleDateString('vi-VN')}
-                          </div>
-                        </td>
-
-                        {/* Customer Info */}
-                        <td className="p-3.5">
-                          <div className="font-bold text-slate-900">{ord.userName}</div>
-                          <div className="text-[11px] text-slate-500 font-mono-nums">{ord.userPhone}</div>
-                          {ord.userClass && (
-                            <div className="text-[10px] text-slate-400 truncate max-w-[140px]">
-                              {ord.userClass}
-                            </div>
-                          )}
-                        </td>
-
-                        {/* Pickup Slot & Dining */}
-                        <td className="p-3.5">
-                          <div className="font-semibold text-slate-800 flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-amber-600 shrink-0" />
-                            <span>{ord.pickupTimeSlot}</span>
-                          </div>
-                          <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600">
-                            {ord.diningOption === 'dine_in'
-                              ? `Ăn tại chỗ ${ord.tableNumber ? `(Bàn ${ord.tableNumber})` : ''}`
-                              : 'Mang về (Hộp giấy)'}
-                          </span>
-                        </td>
-
-                        {/* Items Preview */}
-                        <td className="p-3.5">
-                          <div className="space-y-0.5 max-w-[200px]">
-                            {ord.items.map((it, idx) => (
-                              <div key={idx} className="text-slate-700 truncate text-[11px]">
-                                <span className="font-bold font-mono-nums">{it.quantity}x</span>{' '}
-                                <span>{it.name}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-
-                        {/* Total Amount & Payment */}
-                        <td className="p-3.5">
-                          <div className="font-bold font-mono-nums text-slate-900">
-                            {ord.totalAmount.toLocaleString('vi-VN')}₫
-                          </div>
-                          <span
-                            className={`inline-block text-[10px] font-semibold px-1.5 py-0.2 rounded ${
-                              ord.paymentStatus === 'refunded'
-                                ? 'bg-rose-100 text-rose-700'
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}
-                          >
-                            {ord.paymentStatus === 'refunded' ? 'Đã hoàn tiền' : 'Ví CanteenGo'}
-                          </span>
-                        </td>
-
-                        {/* Status Badge */}
-                        <td className="p-3.5">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border ${badge.bg}`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
-                            <span>{badge.label}</span>
-                          </span>
-                          {ord.cancelReason && (
-                            <p className="text-[10px] text-rose-600 italic mt-1 max-w-[130px] truncate" title={ord.cancelReason}>
-                              Lý do: {ord.cancelReason}
-                            </p>
-                          )}
-                        </td>
-
-                        {/* Admin Action Buttons */}
-                        <td className="p-3.5 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {/* Step Status Buttons */}
-                            {ord.status === 'paid_pending_confirm' && (
-                              <button
-                                onClick={() => updateOrderStatus(ord.id, 'preparing')}
-                                className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-2xs transition-colors cursor-pointer"
-                                title="Chuyển sang chế biến trong bếp"
-                              >
-                                Bếp nấu
-                              </button>
-                            )}
-
-                            {ord.status === 'preparing' && (
-                              <button
-                                onClick={() => updateOrderStatus(ord.id, 'ready')}
-                                className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-[11px] shadow-2xs transition-colors cursor-pointer"
-                                title="Đã nấu xong, gọi sinh viên đến lấy"
-                              >
-                                Đã xong
-                              </button>
-                            )}
-
-                            {ord.status === 'ready' && (
-                              <button
-                                onClick={() => updateOrderStatus(ord.id, 'completed')}
-                                className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs transition-colors cursor-pointer"
-                                title="Sinh viên đã nhận món thành công"
-                              >
-                                Hoàn tất
-                              </button>
-                            )}
-
-                            {/* View Details */}
-                            <button
-                              onClick={() => setSelectedOrderForAdmin(ord)}
-                              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
-                              title="Xem chi tiết đơn"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-
-                            {/* Cancel / Refund Button (Available for incomplete orders) */}
-                            {ord.status !== 'completed' && ord.status !== 'cancelled' && (
-                              <button
-                                onClick={() => {
-                                  setOrderToCancel(ord);
-                                  setCancelReasonInput('Căn tin hết nguyên liệu đột xuất / Khách yêu cầu hủy');
-                                  setIsCancelModalOpen(true);
-                                }}
-                                className="px-2 py-1 rounded-lg border border-rose-200 hover:bg-rose-50 text-rose-700 font-bold text-[11px] transition-colors cursor-pointer"
-                                title="Hủy đơn và hoàn tiền 100% về Ví CanteenGo"
-                              >
-                                Hủy & Hoàn ví
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
       {/* Tab 2: Menu Management (US10, US11) */}
       {activeTab === 'menu' && (
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-4 animate-in fade-in duration-200">
@@ -1395,8 +595,8 @@ export const AdminDashboard: React.FC = () => {
                 <tr>
                   <th className="p-3.5">Món ăn</th>
                   <th className="p-3.5">Danh mục</th>
-                  <th className="p-3.5 font-mono-nums">Đơn giá</th>
-                  <th className="p-3.5 font-mono-nums">Tồn kho</th>
+                  <th className="p-3.5">Đơn giá</th>
+                  <th className="p-3.5">Tồn kho</th>
                   <th className="p-3.5">Trạng thái bán</th>
                   <th className="p-3.5 text-right">Thao tác</th>
                 </tr>
@@ -1495,86 +695,6 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Tab: Categories Management */}
-      {activeTab === 'categories' && (
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-6 animate-in fade-in duration-200">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold">
-                  <Layers className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">
-                  Quản lý Danh mục thực đơn ({categories.length})
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Phân loại món ăn theo danh mục giúp sinh viên dễ dàng lọc món (món mặn, món chay, đồ uống, ăn vặt...).
-              </p>
-            </div>
-
-            <button
-              onClick={handleOpenAddCategory}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs self-start sm:self-auto cursor-pointer"
-            >
-              <Plus className="w-4 h-4 text-amber-400" />
-              <span>Thêm danh mục mới</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {categories.map((cat) => {
-              const dishCount = foods.filter((f) => f.categoryId === cat.id).length;
-              return (
-                <div
-                  key={cat.id}
-                  className="p-5 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:shadow-md transition-all space-y-3 flex flex-col justify-between"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-mono">
-                        {cat.slug}
-                      </span>
-                      <span className="text-xs text-slate-500 font-semibold">
-                        {dishCount} món ăn
-                      </span>
-                    </div>
-
-                    <h4 className="text-base font-bold text-slate-900">{cat.name}</h4>
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                      {cat.description || 'Chưa có mô tả cho danh mục này.'}
-                    </p>
-                  </div>
-
-                  <div className="pt-3 border-t border-slate-200/80 flex items-center justify-end gap-2 text-xs">
-                    <button
-                      onClick={() => handleOpenEditCategory(cat)}
-                      className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold transition-colors flex items-center gap-1 cursor-pointer"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                      <span>Sửa</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (dishCount > 0) {
-                          showToast(`Không thể xóa danh mục "${cat.name}" vì đang có ${dishCount} món ăn thuộc danh mục này!`, 'error');
-                          return;
-                        }
-                        adminDeleteCategory(cat.id);
-                      }}
-                      className="px-3 py-1.5 rounded-lg border border-rose-200 hover:bg-rose-50 text-rose-600 font-semibold transition-colors flex items-center gap-1 cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Xóa</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Tab 3: Reviews (US32) */}
       {activeTab === 'reviews' && (
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-4 animate-in fade-in duration-200">
@@ -1613,202 +733,78 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 4: Users & Wallets Management */}
+      {/* Tab 4: Users List (US05) */}
       {activeTab === 'users' && (
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-6 animate-in fade-in duration-200">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-                  <Users className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">
-                  Quản lý tài khoản & Số dư Ví CanteenGo
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Quản lý quyền hạn (Sinh viên, Giảng viên, Bếp, Admin), nạp tiền thủ công vào ví sinh viên và đặt lại mật khẩu.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs">
-              <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-bold">
-                {users.length} tài khoản
-              </span>
-              <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold font-mono-nums">
-                Tổng ví: {users.reduce((s, u) => s + (u.walletBalance || 0), 0).toLocaleString('vi-VN')}₫
-              </span>
-            </div>
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-4 animate-in fade-in duration-200">
+          <div>
+            <h3 className="text-base font-bold text-slate-900">
+              Danh sách tài khoản & Phân quyền hệ thống
+            </h3>
+            <p className="text-xs text-slate-500">
+              Phân quyền theo 3 vai trò: Sinh viên, Nhân viên căn tin và Quản trị viên
+            </p>
           </div>
 
-          {/* Search & Role Filter Tabs */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
-              {[
-                { id: 'all', label: 'Tất cả', count: users.length },
-                { id: 'customer', label: 'Sinh viên', count: users.filter((u) => u.role === 'customer').length },
-                { id: 'lecturer', label: 'Giảng viên', count: users.filter((u) => u.role === 'lecturer').length },
-                { id: 'staff', label: 'Bếp Căn tin', count: users.filter((u) => u.role === 'staff').length },
-                { id: 'admin', label: 'Quản trị viên', count: users.filter((u) => u.role === 'admin').length },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setUserRoleFilter(tab.id)}
-                  className={`px-3 py-1.5 rounded-xl font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 border ${
-                    userRoleFilter === tab.id
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-100 border-slate-200'
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  <span
-                    className={`px-1.5 py-0.2 rounded-md text-[10px] font-bold ${
-                      userRoleFilter === tab.id
-                        ? 'bg-slate-800 text-amber-400'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <div className="relative min-w-[240px]">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                placeholder="Tìm tên, email, MSSV, SĐT..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500/30 text-slate-900 placeholder:text-slate-400"
-              />
-            </div>
-          </div>
-
-          {/* Users Table */}
           <div className="overflow-x-auto rounded-2xl border border-slate-200">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
                 <tr>
                   <th className="p-3.5">Họ và tên & MSSV</th>
-                  <th className="p-3.5">Lớp / Khoa phòng</th>
-                  <th className="p-3.5">Email & SĐT</th>
+                  <th className="p-3.5">Lớp / Bộ phận</th>
+                  <th className="p-3.5">Email</th>
+                  <th className="p-3.5">Số điện thoại</th>
                   <th className="p-3.5">Vai trò</th>
-                  <th className="p-3.5 font-mono-nums">Số dư Ví CanteenGo</th>
-                  <th className="p-3.5 text-right">Thao tác Admin</th>
+                  <th className="p-3.5">Số dư Ví CanteenGo</th>
+                  <th className="p-3.5 text-right">Hành động</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-400">
-                      Không tìm thấy tài khoản nào phù hợp với bộ lọc.
+                {users.map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-50/60">
+                    <td className="p-3.5">
+                      <div className="font-bold text-slate-900">{u.name}</div>
+                      {u.mssv && (
+                        <div className="text-[11px] text-amber-700 font-mono font-semibold">
+                          MSSV: {u.mssv}
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-3.5 text-slate-700 font-medium">
+                      {u.department || u.className || '—'}
+                    </td>
+                    <td className="p-3.5 text-slate-600 font-mono text-[11px]">{u.email}</td>
+                    <td className="p-3.5 text-slate-600 font-mono-nums">{u.phone}</td>
+                    <td className="p-3.5">
+                      <span
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                          u.role === 'customer'
+                            ? 'bg-amber-100 text-amber-800'
+                            : u.role === 'staff'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-purple-100 text-purple-800'
+                        }`}
+                      >
+                        {u.role === 'customer'
+                          ? 'Sinh viên'
+                          : u.role === 'staff'
+                          ? 'Nhân viên Căn tin'
+                          : 'Quản trị viên'}
+                      </span>
+                    </td>
+                    <td className="p-3.5 font-bold font-mono-nums text-slate-900">
+                      {u.walletBalance.toLocaleString('vi-VN')}₫
+                    </td>
+                    <td className="p-3.5 text-right">
+                      <button
+                        onClick={() => switchUser(u.id)}
+                        className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] transition-colors shadow-2xs whitespace-nowrap"
+                        title="Đăng nhập và chuyển giao diện sang tài khoản này"
+                      >
+                        Chuyển ngay
+                      </button>
                     </td>
                   </tr>
-                ) : (
-                  filteredUsers.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="p-3.5">
-                        <div className="font-bold text-slate-900">{u.name}</div>
-                        {u.mssv && (
-                          <div className="text-[11px] text-amber-700 font-mono font-semibold">
-                            MSSV: {u.mssv}
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-3.5 text-slate-700 font-medium">
-                        {u.department || u.className || '—'}
-                      </td>
-                      <td className="p-3.5">
-                        <div className="text-slate-600 font-mono text-[11px]">{u.email}</div>
-                        <div className="text-slate-500 font-mono-nums text-[11px]">{u.phone}</div>
-                      </td>
-                      <td className="p-3.5">
-                        <span
-                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                            u.role === 'customer'
-                              ? 'bg-amber-100 text-amber-800'
-                              : u.role === 'lecturer'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : u.role === 'staff'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-purple-100 text-purple-800'
-                          }`}
-                        >
-                          {u.role === 'customer'
-                            ? 'Sinh viên'
-                            : u.role === 'lecturer'
-                            ? 'Giảng viên'
-                            : u.role === 'staff'
-                            ? 'Nhân viên Bếp'
-                            : 'Quản trị viên'}
-                        </span>
-                      </td>
-                      <td className="p-3.5 font-bold font-mono-nums text-slate-900 text-sm">
-                        {u.walletBalance.toLocaleString('vi-VN')}₫
-                      </td>
-                      <td className="p-3.5 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Top-up Wallet Button */}
-                          <button
-                            onClick={() => {
-                              setTargetUserForWallet({
-                                id: u.id,
-                                name: u.name,
-                                balance: u.walletBalance,
-                              });
-                              setWalletAmountInput(50000);
-                              setWalletNoteInput('Admin nạp tiền hỗ trợ sinh viên');
-                              setIsWalletModalOpen(true);
-                            }}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1"
-                            title="Nạp tiền vào ví cho tài khoản này"
-                          >
-                            <Wallet className="w-3 h-3" />
-                            <span>Nạp ví</span>
-                          </button>
-
-                          {/* Change Role Button */}
-                          <button
-                            onClick={() => {
-                              setTargetUserForRole({ id: u.id, name: u.name, role: u.role });
-                              setSelectedRoleInput(u.role);
-                              setIsRoleModalOpen(true);
-                            }}
-                            className="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-[11px] transition-colors cursor-pointer"
-                            title="Thay đổi vai trò hệ thống"
-                          >
-                            Đổi quyền
-                          </button>
-
-                          {/* Reset Password */}
-                          <button
-                            onClick={() => {
-                              if (confirm(`Đặt lại mật khẩu cho "${u.name}" về 123456?`)) {
-                                adminResetUserPassword(u.id);
-                              }
-                            }}
-                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
-                            title="Reset mật khẩu về mặc định 123456"
-                          >
-                            <KeyRound className="w-3.5 h-3.5" />
-                          </button>
-
-                          {/* Switch User Test */}
-                          <button
-                            onClick={() => switchUser(u.id)}
-                            className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] transition-colors shadow-2xs whitespace-nowrap cursor-pointer"
-                            title="Đăng nhập và chuyển giao diện sang tài khoản này"
-                          >
-                            Chuyển ngay
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
@@ -2430,346 +1426,6 @@ LIMIT 5;`}
         </div>
       )}
 
-      {/* Tab: Operations & System Settings */}
-      {activeTab === 'settings' && (
-        <div className="space-y-6 animate-in fade-in duration-200">
-          {/* Header */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-700 flex items-center justify-center font-bold">
-                  <Sliders className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">
-                    Vận hành & Cài đặt hệ thống căn tin
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Quản lý đóng/mở quầy phục vụ, phát thông báo chạy chữ, tải báo cáo Excel và công cụ kiểm thử.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500 font-semibold">Trạng thái quầy:</span>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
-                    isCanteenOpen
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                      : 'bg-rose-50 text-rose-800 border-rose-300'
-                  }`}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      isCanteenOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
-                    }`}
-                  />
-                  <span>{isCanteenOpen ? 'Đang mở cửa nhận đơn' : 'Tạm dừng nhận đơn'}</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Grid 2 Columns */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Card 1: Canteen Open/Close & Kitchen Capacity */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-5">
-              <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">
-                    Khung giờ nhận đơn & Công suất bếp
-                  </h4>
-                  <span className="text-[11px] text-slate-500">
-                    Kiểm soát tải của căn tin trong các giờ cao điểm
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-4 text-xs">
-                {/* Switch Canteen Open */}
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4">
-                  <div>
-                    <span className="font-bold text-slate-900 block text-xs">
-                      Cổng nhận đơn trực tuyến
-                    </span>
-                    <span className="text-slate-500 text-[11px]">
-                      {isCanteenOpen
-                        ? 'Sinh viên và giảng viên có thể đặt món bình thường.'
-                        : 'Khách hàng sẽ thấy thông báo tạm ngưng nhận đơn do bếp quá tải.'}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleToggleCanteenOpen}
-                    className={`px-3.5 py-2 rounded-xl font-bold text-xs shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap ${
-                      isCanteenOpen
-                        ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                    }`}
-                  >
-                    {isCanteenOpen ? 'Tạm dừng nhận đơn' : 'Mở lại cổng nhận đơn'}
-                  </button>
-                </div>
-
-                {/* Operating hours display */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <span className="text-slate-500 text-[11px] block">Giờ mở cửa phục vụ</span>
-                    <span className="font-bold font-mono text-slate-900 text-sm">06:30 Sáng</span>
-                  </div>
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <span className="text-slate-500 text-[11px] block">Giờ ngưng nhận đơn</span>
-                    <span className="font-bold font-mono text-slate-900 text-sm">18:30 Chiều</span>
-                  </div>
-                </div>
-
-                {/* Capacity Setting */}
-                <div className="space-y-1.5 pt-2">
-                  <label className="block font-bold text-slate-700 text-xs">
-                    Công suất tối đa mỗi khung giờ (15 phút)
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      min="10"
-                      max="200"
-                      value={maxOrdersPerSlot}
-                      onChange={(e) => setMaxOrdersPerSlot(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSaveCapacity}
-                      className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs whitespace-nowrap cursor-pointer"
-                    >
-                      Lưu công suất
-                    </button>
-                  </div>
-                  <span className="text-[11px] text-slate-500">
-                    Khi đạt giới hạn, hệ thống sẽ tự động khóa khung giờ đó để tránh dồn ứ đơn tại quầy lấy món.
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 2: Marquee Banner Announcement Editor */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-5">
-              <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
-                  <Megaphone className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">
-                    Thông báo chạy chữ toàn trường (Marquee Banner)
-                  </h4>
-                  <span className="text-[11px] text-slate-500">
-                    Nội dung hiển thị chạy chữ liên tục trên đầu trang web cho sinh viên
-                  </span>
-                </div>
-              </div>
-
-              <form onSubmit={handleSaveAnnouncement} className="space-y-3 text-xs">
-                <div>
-                  <label className="block font-bold text-slate-700 text-xs mb-1">
-                    Nội dung thông báo phát thanh
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={announcementInput}
-                    onChange={(e) => setAnnouncementInput(e.target.value)}
-                    placeholder="Nhập thông báo gửi toàn trường..."
-                    className="w-full p-3 rounded-2xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 leading-relaxed font-medium"
-                  />
-                </div>
-
-                {/* Quick Templates */}
-                <div className="space-y-1">
-                  <span className="text-[11px] font-semibold text-slate-500 block">Mẫu nhanh:</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setAnnouncementInput(
-                          '🎉 Chào mừng đến với Căn tin EatNow! Đặt trước nhận ngay — Giảm 10% cho đơn hàng đầu tiên qua Ví CanteenGo | Thực đơn trưa phục vụ từ 10:30 đến 13:30 mỗi ngày | Chúc bạn một bữa ăn ngon miệng! 🍱🥤'
-                        )
-                      }
-                      className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10.5px] cursor-pointer"
-                    >
-                      Mặc định
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setAnnouncementInput(
-                          '📢 THÔNG BÁO KHẨN: Giờ cao điểm từ 11:30 - 12:15, các bạn sinh viên vui lòng kiểm tra mã lấy món trên app trước khi vào quầy A1 để nhận món nhanh nhất!'
-                        )
-                      }
-                      className="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[10.5px] cursor-pointer"
-                    >
-                      Cảnh báo giờ cao điểm
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setAnnouncementInput(
-                          '🌿 HÔM NAY CÓ THỰC ĐƠN MÓN CHAY THANH ĐẠM: Đậu hũ sốt nấm hương, Canh chua bông điên điển và Trà sen vàng hạt chia. Mời quý thầy cô và sinh viên thưởng thức!'
-                        )
-                      }
-                      className="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10.5px] cursor-pointer"
-                    >
-                      Thực đơn món chay
-                    </button>
-                  </div>
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-transform active:scale-95 cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Megaphone className="w-3.5 h-3.5" />
-                    <span>Cập nhật bảng tin ngay</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Card 3: Data Export Center (Excel & CSV) */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-                  <Download className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">
-                    Trung tâm xuất báo cáo dữ liệu (Excel / CSV)
-                  </h4>
-                  <span className="text-[11px] text-slate-500">
-                    Xuất file bảng tính hỗ trợ tiếng Việt đầy đủ chuẩn UTF-8 BOM
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-3 text-xs">
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <span className="font-bold text-slate-900 block text-xs">
-                      Báo cáo toàn bộ đơn hàng căn tin
-                    </span>
-                    <span className="text-slate-500 text-[11px]">
-                      Bao gồm {orders.length} đơn hàng, chi tiết tên món, mã đơn, khách hàng, tổng tiền ví.
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={exportOrdersToCSV}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap self-start sm:self-auto"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Tải Excel Đơn hàng (.csv)</span>
-                  </button>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <span className="font-bold text-slate-900 block text-xs">
-                      Báo cáo Tài khoản & Số dư Ví CanteenGo
-                    </span>
-                    <span className="text-slate-500 text-[11px]">
-                      Danh sách {users.length} người dùng (Sinh viên, Giảng viên, Bếp) kèm số dư ví thực tế.
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={exportUsersToCSV}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap self-start sm:self-auto"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Tải Excel Tài khoản & Ví</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 4: Quick Testing & Operations Playground */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold">
-                  <PlayCircle className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">
-                    Công cụ Kiểm thử & Demo Vận hành
-                  </h4>
-                  <span className="text-[11px] text-slate-500">
-                    Phím tắt dành riêng cho Quản trị viên để kiểm tra quy trình nhanh chóng
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-3 text-xs">
-                <div className="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-200 flex items-center justify-between gap-3">
-                  <div>
-                    <span className="font-bold text-blue-950 block text-xs">
-                      Tạo đơn hàng mẫu tự động (Mock Order)
-                    </span>
-                    <span className="text-blue-700 text-[11px]">
-                      Tự động tạo 1 đơn mới với món ngẫu nhiên để kiểm thử quy trình duyệt và bàn giao tại bếp.
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCreateMockOrder}
-                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs whitespace-nowrap cursor-pointer"
-                  >
-                    Tạo đơn ngay
-                  </button>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200 flex items-center justify-between gap-3">
-                  <div>
-                    <span className="font-bold text-amber-950 block text-xs">
-                      Nạp +100.000₫ vào tất cả tài khoản
-                    </span>
-                    <span className="text-amber-700 text-[11px]">
-                      Cộng thêm số dư vào ví toàn bộ tài khoản demo để thoải mái kiểm thử đặt món.
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleTopupAllWallets}
-                    className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs whitespace-nowrap cursor-pointer"
-                  >
-                    Bơm ví (+100k)
-                  </button>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-rose-50/50 border border-rose-200 flex items-center justify-between gap-3">
-                  <div>
-                    <span className="font-bold text-rose-950 block text-xs">
-                      Đặt lại dữ liệu gốc (Reset Database)
-                    </span>
-                    <span className="text-rose-700 text-[11px]">
-                      Xóa toàn bộ đơn test và khôi phục thực đơn, tài khoản chuẩn từ ban đầu.
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleResetDemoData}
-                    className="px-3.5 py-2 rounded-xl border border-rose-300 hover:bg-rose-100 text-rose-800 font-bold text-xs whitespace-nowrap cursor-pointer"
-                  >
-                    Khôi phục gốc
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Add Voucher Modal */}
       {isVoucherModalOpen && (
         <div className="fixed inset-0 z-70 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -3197,474 +1853,15 @@ LIMIT 5;`}
                 <button
                   type="button"
                   onClick={() => setIsFoodModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-xs cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-xs"
                 >
                   {editingFood ? 'Lưu thay đổi' : 'Thêm món ăn'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 1: Cancel Order with Instant Wallet Refund */}
-      {isCancelModalOpen && orderToCancel && (
-        <div className="fixed inset-0 z-60 overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-rose-50/60">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
-                  <AlertTriangle className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 leading-tight">
-                    Hủy đơn hàng #{orderToCancel.orderCode}
-                  </h3>
-                  <span className="text-[11px] text-rose-600 font-semibold">
-                    Tiền sẽ được hoàn 100% về Ví CanteenGo tức thì
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setIsCancelModalOpen(false);
-                  setOrderToCancel(null);
-                }}
-                className="w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 text-xs">
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Khách hàng:</span>
-                  <span className="font-bold text-slate-900">{orderToCancel.userName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Số tiền hoàn trả:</span>
-                  <span className="font-bold font-mono-nums text-rose-600 text-sm">
-                    {orderToCancel.totalAmount.toLocaleString('vi-VN')}₫
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Lý do hủy đơn <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  rows={3}
-                  value={cancelReasonInput}
-                  onChange={(e) => setCancelReasonInput(e.target.value)}
-                  placeholder="Nhập lý do (ví dụ: Hết món đột xuất, sự cố nhà bếp, yêu cầu của khách...)"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-rose-500/30 resize-none font-medium"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCancelModalOpen(false);
-                    setOrderToCancel(null);
-                  }}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold cursor-pointer"
-                >
-                  Đóng
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmCancelOrder}
-                  className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-xs cursor-pointer"
-                >
-                  Xác nhận hủy & hoàn tiền
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 2: Admin Order Detail Modal */}
-      {selectedOrderForAdmin && (
-        <div className="fixed inset-0 z-60 overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-bold">
-                  <ShoppingBag className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 leading-tight">
-                    Chi tiết đơn #{selectedOrderForAdmin.orderCode}
-                  </h3>
-                  <span className="text-[11px] text-slate-500">
-                    Đặt lúc: {new Date(selectedOrderForAdmin.createdAt).toLocaleString('vi-VN')}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedOrderForAdmin(null)}
-                className="w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 text-xs max-h-[70vh] overflow-y-auto">
-              {/* Customer summary */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 grid grid-cols-2 gap-2">
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Khách hàng</span>
-                  <span className="font-bold text-slate-900">{selectedOrderForAdmin.userName}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Số điện thoại</span>
-                  <span className="font-mono-nums text-slate-800">{selectedOrderForAdmin.userPhone}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Khung giờ hẹn lấy</span>
-                  <span className="font-semibold text-amber-800">{selectedOrderForAdmin.pickupTimeSlot}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Hình thức dùng bữa</span>
-                  <span className="font-semibold text-slate-800">
-                    {selectedOrderForAdmin.diningOption === 'dine_in'
-                      ? `Ăn tại chỗ ${selectedOrderForAdmin.tableNumber ? `(Bàn ${selectedOrderForAdmin.tableNumber})` : ''}`
-                      : 'Mang về (Takeaway)'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Items */}
-              <div>
-                <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-2">
-                  Danh sách món đã đặt
-                </h4>
-                <div className="space-y-2">
-                  {selectedOrderForAdmin.items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 font-bold flex items-center justify-center font-mono-nums">
-                          {item.quantity}x
-                        </span>
-                        <div>
-                          <div className="font-bold text-slate-900">{item.name}</div>
-                          {item.note && (
-                            <div className="text-[11px] text-amber-700 italic">
-                              Ghi chú: {item.note}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <span className="font-bold font-mono-nums text-slate-900">
-                        {(item.price * item.quantity).toLocaleString('vi-VN')}₫
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Pricing breakdown */}
-              <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-1.5 font-semibold">
-                {selectedOrderForAdmin.voucherCode && (
-                  <div className="flex justify-between text-emerald-700 text-xs">
-                    <span>Voucher áp dụng ({selectedOrderForAdmin.voucherCode}):</span>
-                    <span>-{(selectedOrderForAdmin.discountAmount || 0).toLocaleString('vi-VN')}₫</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-slate-900 text-sm font-bold pt-1 border-t border-amber-200/60">
-                  <span>Tổng thanh toán Ví CanteenGo:</span>
-                  <span className="text-amber-800 font-mono-nums">
-                    {selectedOrderForAdmin.totalAmount.toLocaleString('vi-VN')}₫
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedOrderForAdmin(null)}
-                className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs cursor-pointer"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 3: Add / Edit Category Modal */}
-      {isCategoryModalOpen && (
-        <div className="fixed inset-0 z-60 overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold">
-                  <Layers className="w-4 h-4" />
-                </div>
-                <h3 className="text-base font-bold text-slate-900">
-                  {editingCategory ? 'Chỉnh sửa Danh mục' : 'Thêm Danh mục mới'}
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsCategoryModalOpen(false)}
-                className="w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveCategory} className="p-6 space-y-4 text-xs">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Tên danh mục <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={categoryForm.name}
-                  onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                  placeholder="Ví dụ: Món ăn vặt đặc biệt..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-amber-500/30"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Slug đường dẫn (Tùy chọn)
-                </label>
-                <input
-                  type="text"
-                  value={categoryForm.slug}
-                  onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
-                  placeholder="mon-an-vat (tự sinh nếu để trống)"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-900 font-mono focus:outline-hidden focus:ring-2 focus:ring-amber-500/30"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Mô tả ngắn
-                </label>
-                <textarea
-                  rows={2}
-                  value={categoryForm.description}
-                  onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                  placeholder="Mô tả danh mục này cho sinh viên..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-amber-500/30 resize-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsCategoryModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold cursor-pointer shadow-xs"
-                >
-                  {editingCategory ? 'Lưu thay đổi' : 'Tạo danh mục'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 4: Top-up / Adjust User Wallet Balance */}
-      {isWalletModalOpen && targetUserForWallet && (
-        <div className="fixed inset-0 z-60 overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-emerald-50/70">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-                  <Wallet className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 leading-tight">
-                    Nạp / Điều chỉnh Ví CanteenGo
-                  </h3>
-                  <span className="text-[11px] text-emerald-800 font-medium">
-                    Tài khoản: {targetUserForWallet.name}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setIsWalletModalOpen(false);
-                  setTargetUserForWallet(null);
-                }}
-                className="w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveWalletAdjustment} className="p-6 space-y-4 text-xs">
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center">
-                <span className="text-slate-500">Số dư hiện tại:</span>
-                <span className="text-sm font-bold font-mono-nums text-slate-900">
-                  {targetUserForWallet.balance.toLocaleString('vi-VN')}₫
-                </span>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Số tiền nạp thêm (VNĐ) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  required
-                  min="5000"
-                  step="5000"
-                  value={walletAmountInput}
-                  onChange={(e) => setWalletAmountInput(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-900 font-bold font-mono-nums text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30"
-                />
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {[20000, 50000, 100000, 200000, 500000].map((amt) => (
-                    <button
-                      key={amt}
-                      type="button"
-                      onClick={() => setWalletAmountInput(amt)}
-                      className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-emerald-100 hover:text-emerald-900 text-slate-700 font-semibold font-mono-nums text-[10px] transition-colors cursor-pointer"
-                    >
-                      +{amt.toLocaleString('vi-VN')}₫
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Ghi chú điều chỉnh
-                </label>
-                <input
-                  type="text"
-                  value={walletNoteInput}
-                  onChange={(e) => setWalletNoteInput(e.target.value)}
-                  placeholder="Ví dụ: Nạp tiền trực tiếp tại quầy căn tin..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsWalletModalOpen(false);
-                    setTargetUserForWallet(null);
-                  }}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer shadow-xs"
-                >
-                  Xác nhận nạp tiền
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 5: Change User Role */}
-      {isRoleModalOpen && targetUserForRole && (
-        <div className="fixed inset-0 z-60 overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
-                  <Shield className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 leading-tight">
-                    Phân quyền hệ thống
-                  </h3>
-                  <span className="text-[11px] text-slate-500">
-                    Người dùng: {targetUserForRole.name}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setIsRoleModalOpen(false);
-                  setTargetUserForRole(null);
-                }}
-                className="w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveRoleChange} className="p-6 space-y-4 text-xs">
-              <div className="space-y-2">
-                {[
-                  { id: 'customer', title: 'Sinh viên / Khách hàng', desc: 'Đặt món trước, thanh toán ví CanteenGo, đánh giá món.' },
-                  { id: 'lecturer', title: 'Giảng viên', desc: 'Ưu tiên gọi món, đặt phần ăn giảng viên.' },
-                  { id: 'staff', title: 'Nhân viên Căn tin (Bếp)', desc: 'Xử lý đơn theo thời gian thực, cập nhật trạng thái nấu & sẵn sàng.' },
-                  { id: 'admin', title: 'Quản trị viên (Admin)', desc: 'Toàn quyền cấu hình thực đơn, quản lý tài khoản, xem doanh thu và xuất SQL.' },
-                ].map((r) => (
-                  <label
-                    key={r.id}
-                    className={`flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition-colors ${
-                      selectedRoleInput === r.id
-                        ? 'border-purple-500 bg-purple-50/60 ring-1 ring-purple-300'
-                        : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="userRole"
-                      value={r.id}
-                      checked={selectedRoleInput === r.id}
-                      onChange={() => setSelectedRoleInput(r.id as Role)}
-                      className="mt-0.5 text-purple-600 focus:ring-purple-500"
-                    />
-                    <div>
-                      <span className="font-bold text-slate-900 block">{r.title}</span>
-                      <span className="text-slate-500 text-[11px] mt-0.5 block">{r.desc}</span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsRoleModalOpen(false);
-                    setTargetUserForRole(null);
-                  }}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold cursor-pointer shadow-xs"
-                >
-                  Lưu phân quyền
                 </button>
               </div>
             </form>

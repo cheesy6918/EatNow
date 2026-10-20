@@ -35,7 +35,6 @@ export const Navbar: React.FC = () => {
     setActiveNavTab,
     orders,
     showToast,
-    quickLoginDemoUser,
   } = useApp();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -76,7 +75,7 @@ export const Navbar: React.FC = () => {
   const handleMyOrdersClick = () => {
     if (!isAuthenticated) {
       showToast('Vui lòng đăng nhập để xem lịch sử đơn hàng của bạn!', 'info');
-      setActiveNavTab('login');
+      openAuthModal('login');
       return;
     }
     setActiveNavTab('my-orders');
@@ -92,7 +91,7 @@ export const Navbar: React.FC = () => {
         };
       case 'staff':
         return {
-          label: 'Bếp Căn tin',
+          label: 'Nhân viên bếp',
           bg: 'bg-blue-50 text-blue-800 border-blue-200',
           icon: <ChefHat className="w-3 h-3 text-blue-600" />,
         };
@@ -115,175 +114,182 @@ export const Navbar: React.FC = () => {
   const roleBadge = getRoleBadge(role);
 
   return (
-    <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-        {/* Zone 1: Brand Title (Compact & Polished) */}
-        <div className="flex items-center gap-2 shrink-0">
+    <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+        {/* Zone 1: Brand Title */}
+        <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={() => setActiveNavTab('menu')}
-            className="flex items-center gap-2 text-left group cursor-pointer select-none"
+            className="flex items-center gap-2.5 text-left group"
           >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
-              <UtensilsCrossed className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-slate-950 shadow-md shadow-amber-500/25 group-hover:scale-105 transition-transform">
+              <UtensilsCrossed className="w-5 h-5 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg sm:text-xl font-black tracking-tight text-slate-900 leading-none">
+              <span className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-none">
                 Eat<span className="text-amber-600">Now</span>
               </span>
-              <span className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase mt-0.5 hidden xs:inline">
-                Căn tin ĐH
+              <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase mt-0.5">
+                Căn tin Thông Minh
               </span>
             </div>
           </button>
         </div>
 
-        {/* Zone 2: Segmented Navigation Bar (Tidy, Neat, Centered) */}
-        <div className="hidden sm:flex items-center bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60 shadow-2xs">
+        {/* Zone 2: Navigation Links */}
+        <div className="hidden md:flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => setActiveNavTab('menu')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+            className={`px-3.5 py-2 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
               activeNavTab === 'menu'
-                ? 'bg-white text-slate-900 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                ? 'text-amber-800 bg-amber-50/90 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            Thực đơn
+            Thực đơn hôm nay
           </button>
 
-          {/* Customer / Lecturer Orders */}
+          {/* Customer / Lecturer Order Navigation */}
           {(!role || role === 'customer' || role === 'lecturer') && (
             <button
               onClick={handleMyOrdersClick}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
                 activeNavTab === 'my-orders'
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'text-amber-800 bg-amber-50/90 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
-              <span>Đơn mua</span>
+              <ClipboardList className="w-4 h-4" />
+              <span>Đơn của tôi</span>
               {activeOrdersCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 font-black text-[10px] flex items-center justify-center">
+                <span className="ml-1 w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center font-mono-nums">
                   {activeOrdersCount}
                 </span>
               )}
             </button>
           )}
 
-          {/* Kitchen Staff Tab */}
-          {(role === 'staff' || role === 'admin') && (
+          {/* Staff Tab */}
+          {role === 'staff' && (
             <button
               onClick={() => setActiveNavTab('staff-orders')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
                 activeNavTab === 'staff-orders'
-                  ? 'bg-white text-blue-900 shadow-2xs'
-                  : 'text-blue-700 hover:text-blue-900 hover:bg-blue-100/50'
+                  ? 'text-amber-800 bg-amber-50/90 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <ChefHat className="w-3.5 h-3.5 text-blue-600" />
-              <span>Bếp</span>
+              <ChefHat className="w-4 h-4" />
+              <span>Tiếp nhận & Xử lý đơn bếp</span>
               {staffPendingCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-rose-500 text-white font-bold text-[10px] flex items-center justify-center animate-pulse">
+                <span className="w-5 h-5 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center font-mono-nums animate-pulse">
                   {staffPendingCount}
                 </span>
               )}
             </button>
           )}
 
-          {/* Admin Management Tab */}
+          {/* Admin Tab */}
           {role === 'admin' && (
             <button
               onClick={() => setActiveNavTab('admin-dashboard')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
                 activeNavTab === 'admin-dashboard'
-                  ? 'bg-purple-600 text-white shadow-2xs'
-                  : 'text-purple-700 hover:text-purple-900 hover:bg-purple-100/60'
+                  ? 'text-amber-800 bg-amber-50/90 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Quản trị</span>
+              <BarChart3 className="w-4 h-4" />
+              <span>Bảng Quản Trị & Doanh Thu</span>
             </button>
           )}
+
+          {/* Operating hours */}
+          <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-500 px-2.5 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
+            <Clock className="w-3.5 h-3.5 text-amber-600" />
+            <span>06:30 – 18:30</span>
+          </div>
         </div>
 
-        {/* Zone 3: Actions (Cart, Wallet, Auth / User Menu) */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Cart Trigger */}
+        {/* Zone 3: Primary Actions (Auth State Dependent) */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Cart Button (Always visible) */}
           <button
             onClick={() => setIsCartOpen(true)}
-            className="relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all shadow-2xs active:scale-95 cursor-pointer"
-            title="Xem giỏ hàng"
+            className="relative flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-medium transition-all shadow-sm active:scale-95"
+            title="Giỏ hàng"
           >
-            <ShoppingBag className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden md:inline font-mono-nums text-xs">
-              {cartTotal > 0 ? `${cartTotal.toLocaleString('vi-VN')}₫` : 'Giỏ hàng'}
+            <ShoppingBag className="w-4 h-4 text-amber-400" />
+            <span className="hidden sm:inline font-semibold">
+              {cartTotal > 0 ? (
+                <span className="font-mono-nums">{cartTotal.toLocaleString('vi-VN')}₫</span>
+              ) : (
+                'Giỏ hàng'
+              )}
             </span>
             {cartItemCount > 0 && (
-              <span className="w-4.5 h-4.5 rounded-full bg-amber-500 text-slate-950 font-bold text-[10.5px] flex items-center justify-center font-mono-nums">
+              <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center font-mono-nums">
                 {cartItemCount}
               </span>
             )}
           </button>
 
-          {/* Case A: NOT Authenticated */}
+          {/* Case A: NOT Logged in -> Display Login & Register Buttons */}
           {!isAuthenticated ? (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <button
-                type="button"
-                onClick={() => quickLoginDemoUser('user-admin-01')}
-                className="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-xs font-bold transition-all shadow-2xs cursor-pointer"
-                title="Bấm để vào nhanh quyền Quản trị viên"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
-                <span>Admin Demo</span>
-              </button>
-
               <button
                 onClick={() => {
                   setActiveNavTab('login');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl border text-xs sm:text-sm transition-all ${
                   activeNavTab === 'login'
-                    ? 'bg-amber-100 text-amber-950 border-amber-400 shadow-2xs'
-                    : 'border-slate-300 hover:border-amber-500 hover:bg-amber-50/60 text-slate-700'
+                    ? 'bg-amber-100/90 text-amber-950 border-amber-400 font-bold shadow-2xs'
+                    : 'border-slate-300 hover:border-amber-500 hover:bg-amber-50/50 text-slate-700 hover:text-amber-700 font-semibold'
                 }`}
               >
-                Đăng nhập
+                <LogIn className="w-4 h-4" />
+                <span>Đăng nhập</span>
               </button>
-
               <button
                 onClick={() => {
                   setActiveNavTab('register');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-xs transition-all shadow-xs active:scale-95 cursor-pointer"
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-sm shadow-amber-500/20 active:scale-95 ${
+                  activeNavTab === 'register' ? 'ring-2 ring-amber-500 ring-offset-2' : ''
+                }`}
               >
-                Đăng ký
+                <UserPlus className="w-4 h-4" />
+                <span>Đăng ký</span>
               </button>
             </div>
           ) : (
-            /* Case B: Logged In -> Tidy Wallet Pill & User Avatar */
             /* Case B: LOGGED IN -> Wallet & User Avatar with Dropdown */
             <>
-              {/* Wallet Pill (Clean, compact, single-line) */}
-              <div className="flex items-center bg-amber-50/90 border border-amber-200/90 rounded-xl px-2 py-1 gap-1.5 shadow-2xs">
+              {/* Wallet Pill */}
+              <div className="flex items-center bg-amber-50/90 border border-amber-200 rounded-xl p-1 pr-1.5 sm:pr-2">
                 <button
                   onClick={() => setIsWalletModalOpen(true)}
-                  className="flex items-center gap-1.5 text-slate-800 hover:text-amber-700 transition-colors cursor-pointer"
-                  title="Xem số dư Ví CanteenGo"
+                  className="flex items-center gap-1.5 sm:gap-2 px-1.5 sm:px-2 py-0.5 text-slate-800 hover:text-amber-700 transition-colors"
+                  title="Ví CanteenGo"
                 >
-                  <Wallet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span className="text-xs font-bold font-mono-nums text-slate-900 leading-none">
-                    {currentUser?.walletBalance.toLocaleString('vi-VN')}₫
-                  </span>
+                  <Wallet className="w-4 h-4 text-amber-600 shrink-0" />
+                  <div className="flex flex-col text-left">
+                    <span className="text-[9.5px] text-slate-500 uppercase leading-none font-bold">
+                      Ví CanteenGo
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold font-mono-nums text-slate-900 leading-tight">
+                      {currentUser?.walletBalance.toLocaleString('vi-VN')}₫
+                    </span>
+                  </div>
                 </button>
                 <button
                   onClick={() => setIsWalletModalOpen(true)}
-                  className="w-5 h-5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer shadow-2xs"
+                  className="w-6 h-6 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 flex items-center justify-center text-xs transition-colors ml-1 shadow-2xs"
                   title="Nạp tiền vào ví"
                 >
-                  <Plus className="w-3 h-3" />
+                  <Plus className="w-3.5 h-3.5" />
                 </button>
               </div>
 
@@ -291,10 +297,10 @@ export const Navbar: React.FC = () => {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all text-slate-700 group cursor-pointer"
+                  className="flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all text-slate-700 group"
                   title="Menu tài khoản"
                 >
-                  <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 overflow-hidden border border-slate-300 flex items-center justify-center shrink-0">
+                  <div className="relative w-8 h-8 rounded-full bg-slate-100 overflow-hidden border border-slate-300 flex items-center justify-center">
                     {currentUser?.avatar ? (
                       <img
                         src={currentUser.avatar}
@@ -308,11 +314,11 @@ export const Navbar: React.FC = () => {
                     <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white" />
                   </div>
 
-                  <div className="hidden lg:flex flex-col text-left max-w-[110px]">
+                  <div className="hidden lg:flex flex-col text-left max-w-[120px]">
                     <span className="text-xs font-bold text-slate-900 leading-none truncate">
                       {currentUser?.name}
                     </span>
-                    <span className="text-[9.5px] text-amber-700 font-semibold leading-none mt-1 truncate">
+                    <span className="text-[10px] text-amber-700 font-semibold leading-none mt-1 truncate">
                       {roleBadge.label}
                     </span>
                   </div>
@@ -326,7 +332,7 @@ export const Navbar: React.FC = () => {
 
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-70 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                     {/* User Summary Card */}
                     <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 rounded-t-2xl">
                       <div className="flex items-center gap-2.5">
@@ -361,124 +367,24 @@ export const Navbar: React.FC = () => {
 
                       {/* Wallet Balance Strip */}
                       <div className="mt-2.5 pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs">
-                        <span className="text-slate-500">Số dư ví CanteenGo:</span>
+                        <span className="text-slate-500">Số dư ví:</span>
                         <span className="font-bold font-mono-nums text-slate-900">
                           {currentUser?.walletBalance.toLocaleString('vi-VN')}₫
                         </span>
                       </div>
                     </div>
 
-                    {/* Quick Role Switcher (Demo 1-Touch) */}
-                    <div className="p-2 border-b border-slate-100 bg-slate-50/40 space-y-1.5">
-                      <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-500 px-1">
-                        <span>CHUYỂN VAI TRÒ NHANH (DEMO)</span>
-                        <span className="text-purple-700 font-bold">1 chạm</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <button
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            quickLoginDemoUser('user-admin-01');
-                            setActiveNavTab('admin-dashboard');
-                          }}
-                          className={`p-1.5 rounded-lg border text-left flex items-center gap-1.5 transition-colors cursor-pointer ${
-                            role === 'admin'
-                              ? 'bg-purple-100 border-purple-400 text-purple-950 font-bold ring-1 ring-purple-300'
-                              : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300'
-                          }`}
-                          title="Chuyển sang Quản trị viên"
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                          <span className="text-xs font-bold truncate">👑 Admin</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            quickLoginDemoUser('user-nv-01');
-                            setActiveNavTab('staff-orders');
-                          }}
-                          className={`p-1.5 rounded-lg border text-left flex items-center gap-1.5 transition-colors cursor-pointer ${
-                            role === 'staff'
-                              ? 'bg-blue-100 border-blue-400 text-blue-950 font-bold ring-1 ring-blue-300'
-                              : 'bg-white border-slate-200 text-slate-700 hover:bg-blue-50 hover:border-blue-300'
-                          }`}
-                          title="Chuyển sang Bếp Căn tin"
-                        >
-                          <ChefHat className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                          <span className="text-xs font-bold truncate">🍳 Bếp</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            quickLoginDemoUser('user-sv-01');
-                            setActiveNavTab('menu');
-                          }}
-                          className={`p-1.5 rounded-lg border text-left flex items-center gap-1.5 transition-colors cursor-pointer ${
-                            role === 'customer'
-                              ? 'bg-amber-100 border-amber-400 text-amber-950 font-bold ring-1 ring-amber-300'
-                              : 'bg-white border-slate-200 text-slate-700 hover:bg-amber-50 hover:border-amber-300'
-                          }`}
-                          title="Chuyển sang Sinh viên"
-                        >
-                          <GraduationCap className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span className="text-xs font-bold truncate">🎓 Sinh viên</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            quickLoginDemoUser('user-gv-01');
-                            setActiveNavTab('menu');
-                          }}
-                          className={`p-1.5 rounded-lg border text-left flex items-center gap-1.5 transition-colors cursor-pointer ${
-                            role === 'lecturer'
-                              ? 'bg-emerald-100 border-emerald-400 text-emerald-950 font-bold ring-1 ring-emerald-300'
-                              : 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50 hover:border-emerald-300'
-                          }`}
-                          title="Chuyển sang Giảng viên"
-                        >
-                          <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span className="text-xs font-bold truncate">📚 Giảng viên</span>
-                        </button>
-                      </div>
-                    </div>
-
                     {/* Menu Actions */}
                     <div className="p-1 space-y-0.5 text-xs text-slate-700">
-                      {role === 'admin' && (
-                        <button
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            setActiveNavTab('admin-dashboard');
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-purple-50 text-purple-900 font-bold hover:bg-purple-100 transition-colors text-left"
-                        >
-                          <BarChart3 className="w-4 h-4 text-purple-600" />
-                          <span>Bảng Quản trị & Menu</span>
-                        </button>
-                      )}
-
-                      {(role === 'staff' || role === 'admin') && (
-                        <button
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            setActiveNavTab('staff-orders');
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-blue-50 hover:text-blue-900 font-semibold transition-colors text-left"
-                        >
-                          <ChefHat className="w-4 h-4 text-blue-600" />
-                          <span>Quản lý Bếp Căn tin</span>
-                        </button>
-                      )}
-
                       <button
                         onClick={() => {
                           setIsDropdownOpen(false);
                           setIsProfileModalOpen(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors text-left cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors text-left"
                       >
                         <User className="w-4 h-4 text-slate-500" />
-                        <span>Thông tin tài khoản & vai trò</span>
+                        <span>Thông tin cá nhân</span>
                       </button>
 
                       <button
@@ -486,10 +392,10 @@ export const Navbar: React.FC = () => {
                           setIsDropdownOpen(false);
                           setIsWalletModalOpen(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors text-left cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors text-left"
                       >
                         <Wallet className="w-4 h-4 text-amber-600" />
-                        <span>Lịch sử nạp/rút ví CanteenGo</span>
+                        <span>Lịch sử nạp/rút ví</span>
                       </button>
 
                       <button
@@ -497,11 +403,37 @@ export const Navbar: React.FC = () => {
                           setIsDropdownOpen(false);
                           setActiveNavTab('my-orders');
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors text-left cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors text-left"
                       >
                         <ClipboardList className="w-4 h-4 text-slate-500" />
                         <span>Đơn mua của tôi</span>
                       </button>
+
+                      {role === 'staff' && (
+                        <button
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            setActiveNavTab('staff-orders');
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-amber-50 hover:text-amber-800 font-semibold transition-colors text-left"
+                        >
+                          <ChefHat className="w-4 h-4 text-amber-600" />
+                          <span>Quản lý Bếp Căn tin</span>
+                        </button>
+                      )}
+
+                      {role === 'admin' && (
+                        <button
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            setActiveNavTab('admin-dashboard');
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-purple-50 hover:text-purple-800 font-semibold transition-colors text-left"
+                        >
+                          <BarChart3 className="w-4 h-4 text-purple-600" />
+                          <span>Bảng Quản trị & Menu</span>
+                        </button>
+                      )}
                     </div>
 
                     {/* Divider & Logout */}
@@ -523,73 +455,6 @@ export const Navbar: React.FC = () => {
             </>
           )}
         </div>
-      </div>
-
-      {/* Mobile Sub-Navigation Bar (Clean, tidy horizontal strip) */}
-      <div className="sm:hidden flex items-center justify-around px-2 py-1.5 bg-slate-50/95 border-t border-slate-200 text-xs">
-        <button
-          onClick={() => setActiveNavTab('menu')}
-          className={`flex-1 py-1 px-1 rounded-lg text-center font-semibold transition-colors flex items-center justify-center gap-1 cursor-pointer ${
-            activeNavTab === 'menu'
-              ? 'bg-amber-100 text-amber-950 font-bold'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <UtensilsCrossed className="w-3.5 h-3.5" />
-          <span>Thực đơn</span>
-        </button>
-
-        {(!role || role === 'customer' || role === 'lecturer') && (
-          <button
-            onClick={handleMyOrdersClick}
-            className={`flex-1 py-1 px-1 rounded-lg text-center font-semibold transition-colors flex items-center justify-center gap-1 cursor-pointer relative ${
-              activeNavTab === 'my-orders'
-                ? 'bg-amber-100 text-amber-950 font-bold'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <ClipboardList className="w-3.5 h-3.5" />
-            <span>Đơn mua</span>
-            {activeOrdersCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold flex items-center justify-center">
-                {activeOrdersCount}
-              </span>
-            )}
-          </button>
-        )}
-
-        {(role === 'staff' || role === 'admin') && (
-          <button
-            onClick={() => setActiveNavTab('staff-orders')}
-            className={`flex-1 py-1 px-1 rounded-lg text-center font-semibold transition-colors flex items-center justify-center gap-1 cursor-pointer ${
-              activeNavTab === 'staff-orders'
-                ? 'bg-blue-100 text-blue-950 font-bold'
-                : 'text-slate-600 hover:text-blue-700'
-            }`}
-          >
-            <ChefHat className="w-3.5 h-3.5" />
-            <span>Bếp</span>
-            {staffPendingCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
-                {staffPendingCount}
-              </span>
-            )}
-          </button>
-        )}
-
-        {role === 'admin' && (
-          <button
-            onClick={() => setActiveNavTab('admin-dashboard')}
-            className={`flex-1 py-1 px-1 rounded-lg text-center font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer ${
-              activeNavTab === 'admin-dashboard'
-                ? 'bg-purple-100 text-purple-950 ring-1 ring-purple-300'
-                : 'text-purple-700 hover:text-purple-900'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Quản trị</span>
-          </button>
-        )}
       </div>
     </nav>
   );
