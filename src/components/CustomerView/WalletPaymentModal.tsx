@@ -111,7 +111,7 @@ export const WalletPaymentModal: React.FC<WalletPaymentModalProps> = ({
             <div className="flex justify-between text-slate-600 items-center">
               <span>Hình thức:</span>
               <span className="font-semibold text-slate-800">
-                {diningOption === 'dine_in' ? `🍽️ Ăn tại quầy (${tableNumber})` : '🥡 Đóng hộp mang đi'}
+                {diningOption === 'dine_in' ? '🍽️ Ăn tại căn tin' : '🥡 Đóng hộp mang đi'}
               </span>
             </div>
             <div className="flex justify-between text-slate-600 items-center">

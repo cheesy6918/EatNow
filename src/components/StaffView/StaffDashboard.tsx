@@ -91,7 +91,7 @@ export const StaffDashboard: React.FC = () => {
             Theo dõi đơn mới theo thời gian thực, điều phối chế biến và thông báo sẵn sàng lấy món cho sinh viên.
           </p>
           <div className="mt-2 text-xs text-amber-300 font-medium">
-            Nhân viên phụ trách: <strong>Nguyễn Thị Hồng (MSSV: 2374820071)</strong> · Bộ phận: <strong>Bếp Trưởng & Quầy Căn Tin A1</strong>
+            Nhân viên phụ trách: <strong>Nguyễn Thị Hồng</strong> · Bộ phận: <strong>Bếp Trưởng & Quầy Căn Tin A1</strong>
           </div>
         </div>
 
@@ -306,7 +306,7 @@ export const StaffDashboard: React.FC = () => {
                   <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
                     <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 font-semibold border border-amber-200/60">
                       {order.diningOption === 'dine_in'
-                        ? `🍽️ Ăn tại quầy (${order.tableNumber || 'Khu A1'})`
+                        ? '🍽️ Ăn tại căn tin'
                         : '🥡 Đóng hộp mang đi'}
                     </span>
                     <button

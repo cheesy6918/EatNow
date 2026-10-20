@@ -109,7 +109,7 @@ interface AppContextType {
   finalCartTotal: number;
   cartItemCount: number;
 
-  createOrder: (pickupSlot: string) => Promise<{ success: boolean; orderId?: string; error?: string }>;
+  createOrder: (pickupSlot: string, method?: 'wallet' | 'cod') => Promise<{ success: boolean; orderId?: string; error?: string }>;
   cancelOrder: (orderId: string, reason?: string) => void;
   updateOrderStatus: (orderId: string, newStatus: OrderStatus, cancelReason?: string) => void;
 
@@ -392,7 +392,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : newRole === 'lecturer'
           ? 'Giảng viên'
           : newRole === 'staff'
-          ? 'Nhân viên Căn tin'
+          ? 'Nhân viên'
           : 'Quản trị viên';
       showToast(`Đã chuyển sang vai trò: ${roleText}`, 'info');
       if (newRole === 'staff') {
@@ -417,7 +417,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : found.role === 'lecturer'
           ? 'Giảng viên'
           : found.role === 'staff'
-          ? 'Nhân viên Căn tin'
+          ? 'Nhân viên'
           : 'Quản trị viên';
       showToast(`Đã chuyển sang tài khoản: ${found.name} (${roleTitle})`, 'info');
       if (found.role === 'staff') {
@@ -529,7 +529,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         : found.role === 'lecturer'
         ? 'Giảng viên'
         : found.role === 'staff'
-        ? 'Nhân viên Căn tin'
+        ? 'Nhân viên'
         : 'Quản trị viên';
 
     showToast(`Đăng nhập thành công! Xin chào, ${found.name} (${roleName})`, 'success');
@@ -577,7 +577,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : found.role === 'lecturer'
           ? 'Giảng viên'
           : found.role === 'staff'
-          ? 'Nhân viên Căn tin'
+          ? 'Nhân viên'
           : 'Quản trị viên';
 
       showToast(`Đăng nhập thành công: ${found.name} (${roleName})`, 'success');
@@ -830,7 +830,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Order Placement
-  const createOrder = async (pickupSlot: string): Promise<{ success: boolean; orderId?: string; error?: string }> => {
+  const createOrder = async (
+    pickupSlot: string,
+    method: 'wallet' | 'cod' = 'wallet'
+  ): Promise<{ success: boolean; orderId?: string; error?: string }> => {
     if (!currentUser) {
       showToast('Vui lòng đăng nhập để tiến hành đặt món!', 'info');
       openAuthModal('login');
@@ -851,8 +854,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
-    // Check wallet balance against final discounted total
-    if (currentUser.walletBalance < finalCartTotal) {
+    // Check wallet balance against final discounted total if wallet payment
+    if (method === 'wallet' && currentUser.walletBalance < finalCartTotal) {
       const errorMsg = `Số dư Ví CanteenGo không đủ (${currentUser.walletBalance.toLocaleString('vi-VN')}₫ / Cần ${finalCartTotal.toLocaleString('vi-VN')}₫). Vui lòng nạp thêm tiền!`;
       showToast(errorMsg, 'error');
       return { success: false, error: errorMsg };
@@ -874,30 +877,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
     );
 
-    // Deduct wallet balance
-    const newBalance = currentUser.walletBalance - finalCartTotal;
-    const updatedUser = { ...currentUser, walletBalance: newBalance };
-    setCurrentUser(updatedUser);
-    setUsers((prev) =>
-      prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
-    );
-
     const orderId = `ord-${Date.now()}`;
     const orderCode = `EN-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // Create wallet transaction
-    const tx: WalletTransaction = {
-      id: `tx-${Date.now()}`,
-      userId: currentUser.id,
-      orderId,
-      orderCode,
-      type: 'payment',
-      amount: finalCartTotal,
-      timestamp: new Date().toISOString(),
-      description: `Thanh toán đơn hàng #${orderCode} qua Ví CanteenGo${appliedVoucher ? ` (Giảm ${voucherDiscount.toLocaleString('vi-VN')}₫)` : ''}`,
-      status: 'success',
-    };
-    setTransactions((prev) => [tx, ...prev]);
+    if (method === 'wallet') {
+      // Deduct wallet balance
+      const newBalance = currentUser.walletBalance - finalCartTotal;
+      const updatedUser = { ...currentUser, walletBalance: newBalance };
+      setCurrentUser(updatedUser);
+      setUsers((prev) =>
+        prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
+      );
+
+      // Create wallet transaction
+      const tx: WalletTransaction = {
+        id: `tx-${Date.now()}`,
+        userId: currentUser.id,
+        orderId,
+        orderCode,
+        type: 'payment',
+        amount: finalCartTotal,
+        timestamp: new Date().toISOString(),
+        description: `Thanh toán đơn hàng #${orderCode} qua Ví CanteenGo${appliedVoucher ? ` (Giảm ${voucherDiscount.toLocaleString('vi-VN')}₫)` : ''}`,
+        status: 'success',
+      };
+      setTransactions((prev) => [tx, ...prev]);
+    }
 
     // Create order object
     const newOrder: Order = {
@@ -923,8 +928,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       discountAmount: voucherDiscount,
       status: 'paid_pending_confirm',
       createdAt: new Date().toISOString(),
-      paymentMethod: 'wallet',
-      paymentStatus: 'paid',
+      paymentMethod: method,
+      paymentStatus: method === 'wallet' ? 'paid' : 'unpaid',
     };
 
     setOrders((prev) => [newOrder, ...prev]);
@@ -932,7 +937,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAppliedVoucher(null);
     setIsCartOpen(false);
 
-    showToast(`Đặt món thành công! Mã đơn: #${orderCode}. Khung giờ nhận: ${pickupSlot}`, 'success');
+    if (method === 'cod') {
+      showToast(`Đặt món thành công! Mã đơn: #${orderCode}. Thanh toán ${finalCartTotal.toLocaleString('vi-VN')}₫ tiền mặt khi nhận món.`, 'success');
+    } else {
+      showToast(`Đặt món thành công! Mã đơn: #${orderCode}. Khung giờ nhận: ${pickupSlot}`, 'success');
+    }
     setSelectedOrderForDetail(newOrder);
 
     return { success: true, orderId };

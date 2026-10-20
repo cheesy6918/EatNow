@@ -285,13 +285,15 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   <span>Hình thức nhận món:</span>
                   <span className="font-semibold text-slate-800">
                     {order.diningOption === 'dine_in'
-                      ? `🍽️ Ăn tại quầy (${order.tableNumber || 'Khu A1'})`
+                      ? '🍽️ Ăn tại căn tin'
                       : '🥡 Đóng hộp mang đi'}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-500">
                   <span>Phương thức:</span>
-                  <span className="font-semibold text-slate-800">Ví CanteenGo</span>
+                  <span className="font-semibold text-slate-800">
+                    {order.paymentMethod === 'cod' ? 'Tiền mặt khi nhận (COD)' : 'Ví CanteenGo'}
+                  </span>
                 </div>
                 {order.discountAmount && order.discountAmount > 0 && (
                   <div className="flex justify-between text-emerald-600 font-semibold">

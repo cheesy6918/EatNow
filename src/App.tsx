@@ -134,7 +134,7 @@ const MainLayout: React.FC = () => {
                 <ChefHat className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-bold text-slate-900">
-                Khu vực Quản lý Bếp Căn tin
+                Khu vực Nhân viên
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
                 Trang này dành riêng cho nhân viên căn tin tiếp nhận và xử lý đơn món. Vui lòng đăng nhập với tài khoản nhân viên.
@@ -142,10 +142,10 @@ const MainLayout: React.FC = () => {
               <div className="flex justify-center gap-2 pt-2">
                 <button
                   onClick={() => quickLoginDemoUser('user-nv-01')}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChefHat className="w-4 h-4" />
-                  <span>Đăng nhập Bếp (1 chạm)</span>
+                  <span>Đăng nhập Nhân viên (1 chạm)</span>
                 </button>
                 <button
                   onClick={() => setActiveNavTab('login')}

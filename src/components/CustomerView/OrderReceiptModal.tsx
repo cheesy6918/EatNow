@@ -36,7 +36,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
       `Thời gian đặt: ${new Date(order.createdAt).toLocaleString('vi-VN')}`,
       `Khách hàng: ${order.userName}`,
       `Số điện thoại: ${order.userPhone}`,
-      order.userClass ? `Lớp / MSSV: ${order.userClass}` : '',
+      order.userClass ? `Lớp: ${order.userClass}` : '',
       `Hình thức: ${order.diningOption === 'dine_in' ? `Ăn tại chỗ (${order.tableNumber || 'Khu quầy A1'})` : 'Đóng hộp mang đi'}`,
       `Khung giờ hẹn nhận món: ${order.pickupTimeSlot}`,
       '----------------------------------------',
@@ -138,7 +138,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
               )}
               {order.userClass && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Lớp / MSSV:</span>
+                  <span className="text-slate-500">Lớp:</span>
                   <span>{order.userClass}</span>
                 </div>
               )}
@@ -146,7 +146,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
                 <span className="text-slate-500">Hình thức:</span>
                 <span className="font-semibold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded">
                   {order.diningOption === 'dine_in'
-                    ? `🍽️ Ăn tại chỗ (${order.tableNumber || 'Khu A1'})`
+                    ? '🍽️ Ăn tại căn tin'
                     : '🥡 Đóng hộp mang đi'}
                 </span>
               </div>
