@@ -351,9 +351,6 @@ export const Navbar: React.FC = () => {
                           <p className="text-sm font-bold text-slate-900 truncate">
                             {currentUser?.name}
                           </p>
-                          <p className="text-[11px] text-slate-500 font-mono truncate">
-                            {currentUser?.mssv ? `Mã: ${currentUser.mssv}` : currentUser?.email}
-                          </p>
                           <div className="mt-1">
                             <span
                               className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${roleBadge.bg}`}
