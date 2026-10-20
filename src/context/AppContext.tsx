@@ -30,10 +30,11 @@ interface ToastState {
 
 interface RegisterData {
   name: string;
-  mssv: string;
   emailOrPhone: string;
   password: string;
-  role: Role;
+  mssv?: string;
+  phone?: string;
+  role?: Role;
   className?: string;
 }
 
@@ -466,11 +467,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // Other role aliases
       if (!found) {
-        if (term === 'staff' || term === 'bep' || term === 'nhanvien' || term === '2374820071' || term === 'user-nv-01') {
+        if (
+          term === 'staff' ||
+          term === 'bep' ||
+          term === 'nhanvien' ||
+          term === '2374820071' ||
+          term === 'user-nv-01' ||
+          term === 'nhanvien@canteen.vn'
+        ) {
           found = users.find((u) => u.role === 'staff') || INITIAL_USERS.find((u) => u.role === 'staff');
-        } else if (term === 'gv' || term === 'giangvien' || term === 'nam.th' || term === 'gv-2024' || term === 'user-gv-01') {
+        } else if (
+          term === 'gv' ||
+          term === 'giangvien' ||
+          term === 'nam.th' ||
+          term === 'gv-2024' ||
+          term === 'user-gv-01' ||
+          term === 'giangvien@edu.vn'
+        ) {
           found = users.find((u) => u.role === 'lecturer') || INITIAL_USERS.find((u) => u.role === 'lecturer');
-        } else if (term === 'sv' || term === 'sinhvien' || term === 'linhchi' || term === '2374820028' || term === 'user-sv-01') {
+        } else if (
+          term === 'sv' ||
+          term === 'sinhvien' ||
+          term === 'linhchi' ||
+          term === '2374820028' ||
+          term === 'user-sv-01' ||
+          term === 'sinhvien@st.edu.vn'
+        ) {
           found = users.find((u) => u.role === 'customer') || INITIAL_USERS.find((u) => u.role === 'customer');
         }
       }
@@ -574,18 +596,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Register handler
   const registerUser = (data: RegisterData): boolean => {
-    const { name, mssv, emailOrPhone, password, role: userRole, className } = data;
+    const { name, mssv, emailOrPhone, password, phone, role: inputRole, className } = data;
 
     if (!name.trim()) {
       showToast('Vui lòng nhập Họ và tên!', 'error');
       return false;
     }
-    if (!mssv.trim()) {
-      showToast('Vui lòng nhập Mã sinh viên / Mã nhân viên / Giảng viên!', 'error');
-      return false;
-    }
     if (!emailOrPhone.trim()) {
-      showToast('Vui lòng nhập Email hoặc Số điện thoại!', 'error');
+      showToast('Vui lòng nhập Địa chỉ email!', 'error');
       return false;
     }
     if (!password || password.length < 6) {
@@ -593,31 +611,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return false;
     }
 
-    const termMssv = mssv.trim().toLowerCase();
-    const existingMssv = users.find(
-      (u) => u.mssv && u.mssv.toLowerCase() === termMssv
-    );
-    if (existingMssv) {
-      showToast(`Mã "${mssv}" đã tồn tại trong hệ thống!`, 'error');
-      return false;
+    const isEmail = emailOrPhone.includes('@');
+    const userEmail = isEmail ? emailOrPhone.trim().toLowerCase() : `${emailOrPhone.trim()}@st.edu.vn`;
+    const userPhone = phone?.trim() || (!isEmail ? emailOrPhone.trim() : '09' + Math.floor(10000000 + Math.random() * 90000000));
+
+    // Determine role from email domain or inputRole
+    let detectedRole: Role = inputRole || 'customer';
+    if (!inputRole) {
+      if (userEmail.endsWith('@st.edu.vn')) {
+        detectedRole = 'customer';
+      } else if (userEmail.endsWith('@edu.vn')) {
+        detectedRole = 'lecturer';
+      } else if (userEmail.endsWith('@canteen.vn')) {
+        detectedRole = 'staff';
+      } else if (userEmail.endsWith('@eatnow.vn')) {
+        detectedRole = 'admin';
+      }
     }
 
-    const isEmail = emailOrPhone.includes('@');
-    const userEmail = isEmail ? emailOrPhone.trim() : `${mssv.toLowerCase()}@eatnow.edu.vn`;
-    const userPhone = !isEmail ? emailOrPhone.trim() : '09' + Math.floor(10000000 + Math.random() * 90000000);
+    // Effective MSSV / Code
+    const effectiveMssv =
+      mssv?.trim() ||
+      (detectedRole === 'customer'
+        ? (userEmail.split('@')[0].toUpperCase().slice(0, 10) || `SV${Math.floor(100000 + Math.random() * 900000)}`)
+        : detectedRole === 'lecturer'
+        ? `GV-${Math.floor(1000 + Math.random() * 9000)}`
+        : `NV-${Math.floor(100 + Math.random() * 900)}`);
+
+    const existingEmail = users.find((u) => u.email.toLowerCase() === userEmail.toLowerCase());
+    if (existingEmail) {
+      showToast(`Email "${userEmail}" đã được sử dụng!`, 'error');
+      return false;
+    }
 
     const newUser: User = {
       id: `user-${Date.now()}`,
       name: name.trim(),
-      mssv: mssv.trim(),
+      mssv: effectiveMssv,
       email: userEmail,
       phone: userPhone,
       password,
-      role: userRole,
+      role: detectedRole,
       walletBalance: 100000, // Tặng ngay 100.000₫ vào Ví CanteenGo
-      className: className?.trim() || (userRole === 'customer' ? 'K22-CNTT' : userRole === 'lecturer' ? 'Khoa CNTT' : 'Nhân sự Căn tin'),
-      department: userRole === 'staff' ? 'Nhân viên Quầy Căn tin' : userRole === 'admin' ? 'Ban Quản trị' : undefined,
-      avatar: userRole === 'lecturer'
+      className: className?.trim() || (detectedRole === 'customer' ? 'K22-CNTT' : detectedRole === 'lecturer' ? 'Khoa CNTT' : 'Nhân sự Căn tin'),
+      department: detectedRole === 'staff' ? 'Nhân viên Quầy Căn tin' : detectedRole === 'admin' ? 'Ban Quản trị' : undefined,
+      avatar: detectedRole === 'lecturer'
         ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80'
         : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
     };
@@ -641,9 +679,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     showToast(`Đăng ký thành công! Tặng ngay 100.000₫ vào Ví CanteenGo cho bạn.`, 'success');
 
-    if (userRole === 'staff') {
+    if (detectedRole === 'staff') {
       setActiveNavTab('staff-orders');
-    } else if (userRole === 'admin') {
+    } else if (detectedRole === 'admin') {
       setActiveNavTab('admin-dashboard');
     } else {
       setActiveNavTab('menu');
