@@ -17,16 +17,13 @@ import {
   RotateCcw,
   Printer,
   Package,
-  UtensilsCrossed,
 } from 'lucide-react';
-import { OrderReceiptModal } from '../CustomerView/OrderReceiptModal';
 
 export const StaffDashboard: React.FC = () => {
   const {
     orders,
     updateOrderStatus,
     setSelectedOrderForDetail,
-    receiptOrder,
     setReceiptOrder,
   } = useApp();
 
@@ -479,14 +476,6 @@ export const StaffDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Printable Receipt Modal */}
-      {receiptOrder && (
-        <OrderReceiptModal
-          order={receiptOrder}
-          onClose={() => setReceiptOrder(null)}
-        />
       )}
     </div>
   );

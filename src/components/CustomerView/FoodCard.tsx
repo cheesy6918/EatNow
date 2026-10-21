@@ -60,9 +60,9 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
             <span aria-hidden="true">·</span>
             <div className="flex items-center gap-0.5 text-amber-600 font-semibold">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span>{food.rating.toFixed(1)}</span>
+              <span>{(food.rating ?? 5.0).toFixed(1)}</span>
             </div>
-            <span className="text-slate-400">({food.reviewCount})</span>
+            <span className="text-slate-400">({food.reviewCount ?? 0})</span>
             {food.calories && (
               <>
                 <span aria-hidden="true">·</span>

@@ -161,9 +161,9 @@ export const FoodDetailModal: React.FC = () => {
               <span aria-hidden="true">·</span>
               <div className="flex items-center gap-1 text-amber-600 font-bold">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                <span>{selectedFood.rating.toFixed(1)}</span>
+                <span>{(selectedFood.rating ?? 5.0).toFixed(1)}</span>
               </div>
-              <span>({selectedFood.reviewCount} lượt đánh giá)</span>
+              <span>({selectedFood.reviewCount ?? 0} lượt đánh giá)</span>
               <span aria-hidden="true">·</span>
               <span className="text-slate-700">~{selectedFood.prepTimeMinutes} phút chế biến</span>
             </div>

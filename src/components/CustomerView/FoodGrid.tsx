@@ -46,30 +46,38 @@ export const FoodGrid: React.FC = () => {
     // Search match
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase().trim();
-      const matchName = food.name.toLowerCase().includes(q);
-      const matchDesc = food.description.toLowerCase().includes(q);
-      const matchCategory = food.categoryName.toLowerCase().includes(q);
-      const matchTags = food.tags.some((t) => t.toLowerCase().includes(q));
+      const matchName = food.name ? food.name.toLowerCase().includes(q) : false;
+      const matchDesc = food.description ? food.description.toLowerCase().includes(q) : false;
+      const matchCategory = food.categoryName ? food.categoryName.toLowerCase().includes(q) : false;
+      const matchTags = Array.isArray(food.tags)
+        ? food.tags.some((t) => typeof t === 'string' && t.toLowerCase().includes(q))
+        : false;
       if (!matchName && !matchDesc && !matchCategory && !matchTags) {
         return false;
       }
     }
     // In-stock only
-    if (inStockOnly && (!food.isAvailable || food.stockQuantity <= 0)) {
+    if (inStockOnly && (!food.isAvailable || (food.stockQuantity ?? 0) <= 0)) {
       return false;
     }
     // Price range filter
-    if (priceFilter === 'under30' && food.price >= 30000) return false;
-    if (priceFilter === '30to45' && (food.price < 30000 || food.price > 45000)) return false;
-    if (priceFilter === 'above45' && food.price <= 45000) return false;
+    if (priceFilter === 'under30' && (food.price ?? 0) >= 30000) return false;
+    if (priceFilter === '30to45' && ((food.price ?? 0) < 30000 || (food.price ?? 0) > 45000)) return false;
+    if (priceFilter === 'above45' && (food.price ?? 0) <= 45000) return false;
 
     // Healthy / Low calorie filter (< 550 kcal or veggie)
     if (healthyOnly) {
       const isLowCal = food.calories ? food.calories <= 550 : false;
       const isVeggie = food.categoryId === 'mon-chay';
-      const isCleanTag = food.tags.some((t) =>
-        ['healthy', 'chay', 'thanh mát', 'giàu đạm'].some((kw) => t.toLowerCase().includes(kw))
-      );
+      const isCleanTag = Array.isArray(food.tags)
+        ? food.tags.some(
+            (t) =>
+              typeof t === 'string' &&
+              ['healthy', 'chay', 'thanh mát', 'giàu đạm'].some((kw) =>
+                t.toLowerCase().includes(kw)
+              )
+          )
+        : false;
       if (!isLowCal && !isVeggie && !isCleanTag) return false;
     }
 
@@ -78,11 +86,11 @@ export const FoodGrid: React.FC = () => {
 
   // Sort logic
   filtered.sort((a, b) => {
-    if (sortBy === 'price-asc') return a.price - b.price;
-    if (sortBy === 'price-desc') return b.price - a.price;
-    if (sortBy === 'rating') return b.rating - a.rating;
+    if (sortBy === 'price-asc') return (a.price ?? 0) - (b.price ?? 0);
+    if (sortBy === 'price-desc') return (b.price ?? 0) - (a.price ?? 0);
+    if (sortBy === 'rating') return (b.rating ?? 0) - (a.rating ?? 0);
     // Popular: by reviewCount or default order
-    return b.reviewCount - a.reviewCount;
+    return (b.reviewCount ?? 0) - (a.reviewCount ?? 0);
   });
 
   const resetFilters = () => {

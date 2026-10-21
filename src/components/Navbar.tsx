@@ -45,7 +45,8 @@ export const Navbar: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        event.target instanceof Node &&
+        !dropdownRef.current.contains(event.target)
       ) {
         setIsDropdownOpen(false);
       }
@@ -286,7 +287,7 @@ export const Navbar: React.FC = () => {
                         Ví CanteenGo
                       </span>
                       <span className="text-xs sm:text-sm font-bold font-mono-nums text-slate-900 leading-tight">
-                        {currentUser?.walletBalance.toLocaleString('vi-VN')}₫
+                        {(currentUser?.walletBalance ?? 0).toLocaleString('vi-VN')}₫
                       </span>
                     </div>
                   </button>
@@ -374,7 +375,7 @@ export const Navbar: React.FC = () => {
                         <div className="mt-2.5 pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs">
                           <span className="text-slate-500">Số dư ví:</span>
                           <span className="font-bold font-mono-nums text-slate-900">
-                            {currentUser?.walletBalance.toLocaleString('vi-VN')}₫
+                            {(currentUser?.walletBalance ?? 0).toLocaleString('vi-VN')}₫
                           </span>
                         </div>
                       )}
