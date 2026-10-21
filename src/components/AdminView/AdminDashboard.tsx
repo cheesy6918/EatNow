@@ -286,7 +286,7 @@ export const AdminDashboard: React.FC = () => {
             Quản lý toàn bộ danh mục thực đơn, số lượng tồn kho đầu ngày, giám sát doanh thu và phản hồi từ sinh viên.
           </p>
           <div className="mt-2 text-xs text-amber-300 font-medium">
-            Quản trị viên phụ trách: <strong>Ngô Thị Hồng Thu</strong> · Bộ phận: <strong>Ban Quản Trị Hệ Thống Căn Tin EatNow</strong>
+            Quản trị viên phụ trách: <strong>Ngô Thị Hồng Thu</strong>
           </div>
         </div>
 
@@ -1107,12 +1107,10 @@ export const AdminDashboard: React.FC = () => {
                       <tr>
                         <th className="py-2.5 px-3">id (PK)</th>
                         <th className="py-2.5 px-3">name</th>
-                        <th className="py-2.5 px-3">mssv</th>
                         <th className="py-2.5 px-3">email</th>
                         <th className="py-2.5 px-3">phone</th>
                         <th className="py-2.5 px-3">role</th>
                         <th className="py-2.5 px-3">wallet_balance</th>
-                        <th className="py-2.5 px-3">class_name</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -1120,7 +1118,6 @@ export const AdminDashboard: React.FC = () => {
                         <tr key={u.id} className="hover:bg-slate-50/50">
                           <td className="py-2 px-3 text-amber-700 font-bold">{u.id}</td>
                           <td className="py-2 px-3 font-sans font-medium">{u.name}</td>
-                          <td className="py-2 px-3">{u.mssv || 'NULL'}</td>
                           <td className="py-2 px-3 text-slate-500">{u.email}</td>
                           <td className="py-2 px-3">{u.phone}</td>
                           <td className="py-2 px-3">
@@ -1131,7 +1128,6 @@ export const AdminDashboard: React.FC = () => {
                             </span>
                           </td>
                           <td className="py-2 px-3 text-amber-600 font-bold">{u.walletBalance.toLocaleString('vi-VN')}₫</td>
-                          <td className="py-2 px-3 font-sans text-slate-500">{u.className || u.department || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1291,7 +1287,6 @@ export const AdminDashboard: React.FC = () => {
                 <div className="space-y-1 font-mono text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                   <div>• <strong>id</strong>: VARCHAR(50) [PK, NOT NULL]</div>
                   <div>• <strong>name</strong>: VARCHAR(100) [NOT NULL]</div>
-                  <div>• <strong>mssv</strong>: VARCHAR(20) NULL</div>
                   <div>• <strong>email</strong>: VARCHAR(100) [UNIQUE]</div>
                   <div>• <strong>role</strong>: ENUM('customer', 'staff', 'admin')</div>
                   <div>• <strong>wallet_balance</strong>: DECIMAL(14,2)</div>

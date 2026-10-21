@@ -230,7 +230,6 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
               </div>
               <div className="text-xs text-slate-600">
                 Người nhận: <strong>{order.userName}</strong> ({order.userPhone})
-                {order.userClass && ` · Lớp: ${order.userClass}`}
               </div>
             </div>
 
