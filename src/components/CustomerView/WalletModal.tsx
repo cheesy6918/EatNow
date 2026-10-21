@@ -84,7 +84,7 @@ export const WalletModal: React.FC = () => {
               </div>
               <div className="flex items-center justify-between text-xs text-slate-300 pt-2 border-t border-white/10">
                 <span>Chủ ví: <strong>{currentUser.name}</strong></span>
-                <span>{currentUser.className || 'Sinh viên'}</span>
+                <span>{currentUser.role === 'lecturer' ? 'Giảng viên' : 'Sinh viên'}</span>
               </div>
             </div>
           </div>

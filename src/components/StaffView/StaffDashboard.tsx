@@ -88,7 +88,7 @@ export const StaffDashboard: React.FC = () => {
             Theo dõi đơn mới theo thời gian thực, điều phối chế biến và thông báo sẵn sàng lấy món cho sinh viên.
           </p>
           <div className="mt-2 text-xs text-amber-300 font-medium">
-            Nhân viên phụ trách: <strong>Nguyễn Thị Hồng</strong> · Bộ phận: <strong>Bếp Trưởng & Quầy Căn Tin A1</strong>
+            Nhân viên phụ trách: <strong>Nguyễn Thị Hồng</strong>
           </div>
         </div>
 
@@ -287,9 +287,6 @@ export const StaffDashboard: React.FC = () => {
                       <span className="font-bold text-slate-800 truncate">
                         {order.userName}
                       </span>
-                      {order.userClass && (
-                        <span className="text-slate-500 shrink-0">({order.userClass})</span>
-                      )}
                     </div>
                     <a
                       href={`tel:${order.userPhone}`}

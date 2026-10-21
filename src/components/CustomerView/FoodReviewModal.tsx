@@ -76,7 +76,7 @@ export const FoodReviewModal: React.FC<FoodReviewModalProps> = ({
               Cảm ơn đánh giá của bạn!
             </h4>
             <p className="text-xs text-slate-500">
-              Nhận xét của bạn sẽ giúp nhà bếp căn tin cải thiện chất lượng phục vụ ngày một tốt hơn.
+              Nhận xét của bạn sẽ giúp nhân viên cải thiện chất lượng phục vụ ngày một tốt hơn.
             </p>
           </div>
         ) : (

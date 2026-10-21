@@ -39,8 +39,6 @@ export const CartDrawer: React.FC = () => {
     voucherDiscount,
     diningOption,
     setDiningOption,
-    tableNumber,
-    setTableNumber,
     openAuthModal,
     createOrder,
   } = useApp();
@@ -357,7 +355,6 @@ export const CartDrawer: React.FC = () => {
                     </div>
                     <div className="text-slate-700">
                       <strong>{currentUser.name}</strong> · {currentUser.phone}
-                      {currentUser.className && ` · ${currentUser.className}`}
                     </div>
                   </div>
                 ) : (
@@ -438,11 +435,11 @@ export const CartDrawer: React.FC = () => {
                           paymentMethod === 'cod' ? 'text-orange-950' : 'text-slate-800'
                         }`}
                       >
-                        Khi nhận đơn (COD)
+                        Thanh toán khi nhận đơn (COD)
                       </span>
                     </div>
                     <span className="text-[10px] text-slate-500 mt-1">
-                      Tiền mặt tại quầy căn tin
+                      Tiền mặt khi nhận món
                     </span>
                   </button>
                 </div>
