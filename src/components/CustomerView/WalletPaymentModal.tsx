@@ -161,7 +161,7 @@ export const WalletPaymentModal: React.FC<WalletPaymentModalProps> = ({
                 </span>
               </div>
               <span className="text-base font-extrabold font-mono-nums">
-                {currentUser.walletBalance.toLocaleString('vi-VN')}₫
+                {(currentUser.walletBalance ?? 0).toLocaleString('vi-VN')}₫
               </span>
             </div>
 
@@ -171,7 +171,7 @@ export const WalletPaymentModal: React.FC<WalletPaymentModalProps> = ({
                 <span>
                   Số dư hợp lệ. Sau thanh toán còn:{' '}
                   <strong className="font-mono-nums">
-                    {(currentUser.walletBalance - amountToPay).toLocaleString('vi-VN')}₫
+                    {((currentUser.walletBalance ?? 0) - amountToPay).toLocaleString('vi-VN')}₫
                   </strong>
                 </span>
               </div>

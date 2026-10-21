@@ -220,18 +220,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('eatnow_cart');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('eatnow_cart');
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((item) => item && item.foodItem && typeof item.foodItem.price === 'number');
+    } catch {
+      return [];
+    }
   });
 
   const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem('eatnow_orders');
-    return saved ? JSON.parse(saved) : INITIAL_ORDERS;
+    try {
+      const saved = localStorage.getItem('eatnow_orders');
+      if (!saved) return INITIAL_ORDERS;
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : INITIAL_ORDERS;
+    } catch {
+      return INITIAL_ORDERS;
+    }
   });
 
   const [transactions, setTransactions] = useState<WalletTransaction[]>(() => {
-    const saved = localStorage.getItem('eatnow_transactions');
-    return saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
+    try {
+      const saved = localStorage.getItem('eatnow_transactions');
+      if (!saved) return INITIAL_TRANSACTIONS;
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : INITIAL_TRANSACTIONS;
+    } catch {
+      return INITIAL_TRANSACTIONS;
+    }
   });
 
   const [reviews, setReviews] = useState<Review[]>(() => {
@@ -313,8 +332,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Vouchers & Dining
   const [vouchers, setVouchers] = useState<Voucher[]>(() => {
-    const saved = localStorage.getItem('eatnow_vouchers');
-    return saved ? JSON.parse(saved) : INITIAL_VOUCHERS;
+    try {
+      const saved = localStorage.getItem('eatnow_vouchers');
+      if (!saved) return INITIAL_VOUCHERS;
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : INITIAL_VOUCHERS;
+    } catch {
+      return INITIAL_VOUCHERS;
+    }
   });
   const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
   const [diningOption, setDiningOption] = useState<'dine_in' | 'takeaway'>('takeaway');
@@ -759,8 +784,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCart([]);
   };
 
-  const cartTotal = cart.reduce(
-    (sum, item) => sum + item.foodItem.price * item.quantity,
+  const cartTotal = (Array.isArray(cart) ? cart : []).reduce(
+    (sum, item) => sum + (item?.foodItem?.price || 0) * (item?.quantity || 1),
     0
   );
 

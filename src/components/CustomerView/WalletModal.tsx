@@ -80,7 +80,7 @@ export const WalletModal: React.FC = () => {
                 </span>
               </div>
               <div className="text-3xl sm:text-4xl font-extrabold font-mono-nums tracking-tight text-white">
-                {currentUser.walletBalance.toLocaleString('vi-VN')}₫
+                {(currentUser.walletBalance ?? 0).toLocaleString('vi-VN')}₫
               </div>
               <div className="flex items-center justify-between text-xs text-slate-300 pt-2 border-t border-white/10">
                 <span>Chủ ví: <strong>{currentUser.name}</strong></span>
